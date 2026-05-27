@@ -20,5 +20,6 @@ export type CalendarDay = ChinaCalendarMeta & {
 
 export type CalendarMonth = {
   month: string;
+  monthlyOvertimeMinutes: number;
   days: CalendarDay[];
 };

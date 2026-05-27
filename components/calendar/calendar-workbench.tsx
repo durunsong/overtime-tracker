@@ -40,6 +40,9 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
     () => calendar.days.find((day) => day.date === selectedDate) ?? calendar.days[0],
     [calendar.days, selectedDate],
   );
+  const monthlyOvertimeText = useMemo(() => {
+    return formatMinutes(calendar.monthlyOvertimeMinutes);
+  }, [calendar.monthlyOvertimeMinutes]);
 
   function selectDay(day: CalendarDay) {
     if (!day.isCurrentMonth) {
@@ -121,9 +124,14 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
       <Card>
         <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-cyan-200" />
-              中国月历考勤
+            <CardTitle className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-cyan-200" />
+                中国月历考勤
+              </span>
+              <span className="rounded-md border border-cyan-200/20 bg-cyan-200/8 px-3 py-1 text-sm font-medium text-cyan-100">
+                当月加班总计时间{monthlyOvertimeText}
+              </span>
             </CardTitle>
             <p className="mt-2 text-sm text-slate-500">
               点击某一天后在右侧编辑当天打卡，节假日和周末会在日历中标记。

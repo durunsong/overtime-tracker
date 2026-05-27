@@ -1,5 +1,6 @@
 "use client";
 
+import type { ClipboardEvent } from "react";
 import { useRef, useState } from "react";
 import { Download, FileUp, ImageUp, Loader2, Sparkles, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ImportPreview } from "@/types/import";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
+import { extractImageFilesFromClipboardItems } from "./clipboard-images";
 
 type ScreenshotImportResult = {
   preview: ImportPreview;
@@ -118,6 +120,17 @@ export function ImportWorkbench() {
     toast.success(`AI 已识别并导入 ${result.data.batch.successRows} 条记录`);
   }
 
+  function pasteScreenshots(event: ClipboardEvent<HTMLDivElement>) {
+    const files = extractImageFilesFromClipboardItems(event.clipboardData.items);
+    if (files.length === 0) {
+      toast.error("剪贴板中没有可导入的 PNG / JPG / WebP 图片");
+      return;
+    }
+
+    event.preventDefault();
+    void importScreenshots(files);
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
       <div className="space-y-4">
@@ -126,14 +139,15 @@ export function ImportWorkbench() {
             <CardTitle>AI 截图自动导入</CardTitle>
           </CardHeader>
           <CardContent>
-            <button
-              onClick={() => imageInputRef.current?.click()}
+            <div
+              tabIndex={0}
+              onPaste={pasteScreenshots}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
                 void importScreenshots(event.dataTransfer.files);
               }}
-              className="flex min-h-56 w-full flex-col items-center justify-center rounded-lg border border-dashed border-fuchsia-200/30 bg-fuchsia-200/5 p-8 text-center transition hover:bg-fuchsia-200/10"
+              className="flex min-h-56 w-full flex-col items-center justify-center rounded-lg border border-dashed border-fuchsia-200/30 bg-fuchsia-200/5 p-8 text-center transition hover:bg-fuchsia-200/10 focus:outline-none focus:ring-2 focus:ring-fuchsia-200/45"
             >
               {screenshotLoading ? (
                 <Loader2 className="h-10 w-10 animate-spin text-fuchsia-100" />
@@ -141,8 +155,12 @@ export function ImportWorkbench() {
                 <ImageUp className="h-10 w-10 text-fuchsia-100" />
               )}
               <span className="mt-5 text-lg font-semibold text-white">上传打卡截图，AI 自动识别并写入</span>
-              <span className="mt-2 text-sm text-slate-400">支持 PNG / JPG / WebP，可多选；识别后按现有规则计算加班</span>
-            </button>
+              <span className="mt-2 text-sm text-slate-400">支持点击上传、拖拽或粘贴 PNG / JPG / WebP，可多选</span>
+              <span className="mt-1 text-xs text-slate-500">选中此区域后按 Ctrl+V，可直接导入剪贴板截图</span>
+              <Button className="mt-5" type="button" variant="secondary" onClick={() => imageInputRef.current?.click()}>
+                <ImageUp className="h-4 w-4" /> 选择截图
+              </Button>
+            </div>
             <input
               ref={imageInputRef}
               type="file"

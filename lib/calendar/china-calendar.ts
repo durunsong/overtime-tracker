@@ -71,13 +71,18 @@ export function buildCalendarMonth(
   month: string,
   records: AttendanceRecordView[],
 ): CalendarMonth {
+  const monthRecords = records.filter((record) => format(record.workDate, "yyyy-MM") === month);
   const monthDate = parse(`${month}-01`, "yyyy-MM-dd", new Date());
   const start = startOfWeek(startOfMonth(monthDate), { weekStartsOn: 1 });
   const end = endOfWeek(endOfMonth(monthDate), { weekStartsOn: 1 });
-  const recordMap = new Map(records.map((record) => [toDateKey(record.workDate), record]));
+  const recordMap = new Map(monthRecords.map((record) => [toDateKey(record.workDate), record]));
 
   return {
     month,
+    monthlyOvertimeMinutes: monthRecords.reduce(
+      (sum, record) => sum + record.overtimeMinutes,
+      0,
+    ),
     days: eachDayOfInterval({ start, end }).map((date) => {
       const key = format(date, "yyyy-MM-dd");
       return {

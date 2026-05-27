@@ -135,4 +135,27 @@ describe("attendance calculation", () => {
     const month = buildCalendarMonth("2026-10", []);
     expect(month.days.some((day) => day.date === "2026-10-01" && day.name === "国庆节")).toBe(true);
   });
+
+  it("summarizes monthly overtime on the calendar from current-month records", () => {
+    const mayRecord = buildAttendanceRecord("may-case", {
+      workDate: new Date("2026-05-26T00:00:00"),
+      checkInTime: parseTime("09:15", new Date("2026-05-26T00:00:00")),
+      checkOutTime: parseTime("21:00", new Date("2026-05-26T00:00:00")),
+    });
+    const aprilRecord = buildAttendanceRecord("april-case", {
+      workDate: new Date("2026-04-27T00:00:00"),
+      checkInTime: parseTime("09:15", new Date("2026-04-27T00:00:00")),
+      checkOutTime: parseTime("22:00", new Date("2026-04-27T00:00:00")),
+    });
+
+    const calendar = buildCalendarMonth("2026-05", [aprilRecord, mayRecord]);
+
+    expect(calendar.monthlyOvertimeMinutes).toBe(120);
+    expect(
+      calendar.days.find((day) => day.date === "2026-05-26")?.record?.id,
+    ).toBe("may-case");
+    expect(
+      calendar.days.find((day) => day.date === "2026-04-27")?.record,
+    ).toBeNull();
+  });
 });
