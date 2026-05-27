@@ -3,6 +3,7 @@ import { buildAttendanceRecord, calculateDailyAttendance, calculateMonthlyReport
 import { formatMinutes, minutesToDecimalHours } from "./formatter";
 import { parseExcelDate, parseTime, toDateKey } from "./parser";
 import { buildCalendarMonth, getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
+import { defaultWorkRule } from "@/types/attendance";
 
 describe("attendance calculation", () => {
   it("does not count check-in time before 09:30 as extra work", () => {
@@ -16,6 +17,45 @@ describe("attendance calculation", () => {
     expect(result.actualWorkMinutes).toBe(600);
     expect(result.overtimeMinutes).toBe(30);
     expect(result.status).toBe("NORMAL");
+  });
+
+  it("caps weekend overtime at standard work minutes when weekends are counted", () => {
+    const workDate = new Date("2026-05-23T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("08:50", workDate),
+        checkOutTime: parseTime("20:30", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        weekendEnabled: true,
+      },
+    );
+
+    expect(result.actualWorkMinutes).toBe(480);
+    expect(result.overtimeMinutes).toBe(480);
+    expect(result.status).toBe("NORMAL");
+  });
+
+  it("subtracts late arrival from counted weekend overtime", () => {
+    const workDate = new Date("2026-05-23T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("10:00", workDate),
+        checkOutTime: parseTime("20:30", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        weekendEnabled: true,
+      },
+    );
+
+    expect(result.actualWorkMinutes).toBe(450);
+    expect(result.overtimeMinutes).toBe(450);
+    expect(result.lateMinutes).toBe(30);
+    expect(result.status).toBe("LATE");
   });
 
   it("marks missing punches and reversed time as abnormal", () => {

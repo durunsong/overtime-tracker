@@ -1,4 +1,4 @@
-import { differenceInMinutes, format, getISOWeek } from "date-fns";
+import { differenceInMinutes, format, getISOWeek, isWeekend } from "date-fns";
 import type {
   AttendanceCalculation,
   AttendanceInput,
@@ -60,19 +60,22 @@ export function calculateDailyAttendance(
       ? start
       : input.checkInTime;
   const lunchMinutes = rule.lunchBreakEnabled ? rule.lunchBreakMinutes : 0;
-  const actualWorkMinutes = Math.max(
+  const rawActualWorkMinutes = Math.max(
     0,
     differenceInMinutes(input.checkOutTime, effectiveStart) - lunchMinutes,
-  );
-  const overtimeMinutes = Math.max(
-    0,
-    differenceInMinutes(input.checkOutTime, overtimeStart),
   );
   const lateMinutes = Math.max(0, differenceInMinutes(input.checkInTime, start));
   const earlyLeaveMinutes = Math.max(
     0,
     differenceInMinutes(end, input.checkOutTime),
   );
+  const isCountedWeekend = rule.weekendEnabled && isWeekend(input.workDate);
+  const actualWorkMinutes = isCountedWeekend
+    ? Math.max(0, standardWorkMinutes - lateMinutes - earlyLeaveMinutes)
+    : rawActualWorkMinutes;
+  const overtimeMinutes = isCountedWeekend
+    ? actualWorkMinutes
+    : Math.max(0, differenceInMinutes(input.checkOutTime, overtimeStart));
 
   if (lateMinutes > 0) {
     issues.push(`迟到 ${lateMinutes} 分钟`);

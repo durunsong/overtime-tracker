@@ -52,7 +52,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200/70">
               Secure attendance intelligence
             </p>
-            <h1 className="max-w-3xl text-5xl font-semibold leading-tight text-white">
+            <h1 className="max-w-none whitespace-nowrap text-4xl font-semibold leading-tight text-white 2xl:text-5xl">
               登录后继续管理加班、月报与 AI 分析
             </h1>
             <p className="max-w-2xl text-base leading-8 text-slate-300">

@@ -19,6 +19,7 @@ import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
 import { isPasswordPolicySatisfied, passwordPolicyDescription } from "@/lib/auth/password-policy";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ type ResetResult = {
 
 type AuthMode = "login" | "register";
 
-export function LoginForm() {
+export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -55,7 +56,7 @@ export function LoginForm() {
     }
 
     toast.success("登录成功");
-    router.push("/dashboard");
+    router.push(getSafeCallbackUrl(callbackUrl));
     router.refresh();
   }
 

@@ -1,5 +1,8 @@
 import { parseExcelBuffer } from "@/lib/excel/parse-excel";
+import { requireCurrentUserId } from "@/lib/auth/session";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
+import { defaultWorkRule } from "@/types/attendance";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +12,7 @@ export async function POST(request: Request) {
       return jsonResponse({ success: false, error: "缺少 Excel 文件" }, { status: 400 });
     }
 
-    const preview = parseExcelBuffer(await file.arrayBuffer());
+    const preview = parseExcelBuffer(await file.arrayBuffer(), undefined, await loadDefaultWorkRule());
     return jsonResponse({ success: true, data: preview });
   } catch (error) {
     return jsonResponse(
@@ -17,4 +20,19 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+}
+
+async function loadDefaultWorkRule() {
+  if (!isDatabaseConfigured()) {
+    return defaultWorkRule;
+  }
+
+  const prisma = getPrisma();
+  const userId = await requireCurrentUserId();
+  const rule = await prisma.workRule.findFirst({
+    where: { userId, isDefault: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return rule ?? defaultWorkRule;
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AttendanceRowInput } from "@/types/attendance";
+import type { AttendanceRowInput, AttendanceStatus, WorkRuleInput } from "@/types/attendance";
 import { defaultWorkRule } from "@/types/attendance";
 import { calculateDailyAttendance } from "./calculate";
 import { parseExcelDate, parseTime } from "./parser";
@@ -33,7 +33,10 @@ export const workRuleSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export function validateAttendanceRow(row: AttendanceRowInput) {
+export function validateAttendanceRow(
+  row: AttendanceRowInput,
+  rule: WorkRuleInput = defaultWorkRule,
+) {
   const workDate = parseExcelDate(row.date);
   const errors: string[] = [];
 
@@ -46,6 +49,32 @@ export function validateAttendanceRow(row: AttendanceRowInput) {
 
   const checkInTime = parseTime(row.checkIn, workDate);
   const checkOutTime = parseTime(row.checkOut, workDate);
+  const nonWorkdayStatus = getNonWorkdayStatus(row.statusText);
+
+  if (!checkInTime && !checkOutTime && nonWorkdayStatus) {
+    return {
+      record: {
+        id: `preview-${workDate.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+        userId: "preview-user",
+        source: "EXCEL_IMPORT" as const,
+        workDate,
+        checkInTime: null,
+        checkOutTime: null,
+        rawCheckInText: row.checkIn == null ? null : String(row.checkIn),
+        rawCheckOutText: row.checkOut == null ? null : String(row.checkOut),
+        remark: row.remark ?? row.statusText ?? null,
+        actualWorkMinutes: 0,
+        standardWorkMinutes: 0,
+        overtimeMinutes: 0,
+        lateMinutes: 0,
+        earlyLeaveMinutes: 0,
+        status: nonWorkdayStatus,
+        issues: [],
+      },
+      errors: [],
+    };
+  }
+
   const calculation = calculateDailyAttendance(
     {
       workDate,
@@ -55,7 +84,7 @@ export function validateAttendanceRow(row: AttendanceRowInput) {
       rawCheckOutText: row.checkOut == null ? null : String(row.checkOut),
       remark: row.remark,
     },
-    defaultWorkRule,
+    rule,
   );
 
   errors.push(...calculation.issues);
@@ -75,4 +104,27 @@ export function validateAttendanceRow(row: AttendanceRowInput) {
     },
     errors,
   };
+}
+
+function getNonWorkdayStatus(statusText?: string): AttendanceStatus | null {
+  const normalized = statusText?.trim().toLowerCase();
+  if (!normalized) return null;
+
+  if (
+    ["节假日", "假日", "法定节假日", "holiday"].some((keyword) =>
+      normalized.includes(keyword),
+    )
+  ) {
+    return "HOLIDAY";
+  }
+
+  if (
+    ["休息", "休息日", "rest day", "rest"].some((keyword) =>
+      normalized.includes(keyword),
+    )
+  ) {
+    return "REST_DAY";
+  }
+
+  return null;
 }

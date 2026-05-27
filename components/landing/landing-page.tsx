@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef } from "react";
-import { ArrowRight, AtSign, Globe, MessageCircle } from "lucide-react";
+import { ArrowRight, BarChart3, Bot, Clock3, FileSpreadsheet } from "lucide-react";
 
 const VIDEO_SOURCE =
   "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4";
@@ -10,6 +10,31 @@ const VIDEO_SOURCE =
 const FADE_DURATION = 500;
 const LOOP_RESTART_DELAY = 100;
 const FADE_OUT_REMAINING_SECONDS = 0.55;
+
+export const LANDING_COPY = {
+  brand: "Overtime Tracker",
+  navItems: [
+    { label: "Excel导入", href: "/dashboard/import" },
+    { label: "统计看板", href: "/dashboard" },
+    { label: "月报导出", href: "/dashboard/reports" },
+  ],
+  auth: {
+    register: "创建账号",
+    login: "登录",
+  },
+  heroTitle: "加班统计，从打卡表开始",
+  emailPlaceholder: "输入邮箱，接收月报提醒",
+  emailAriaLabel: "月报提醒邮箱",
+  submitAriaLabel: "提交邮箱",
+  heroDescription:
+    "导入 Excel 打卡数据，自动识别上下班时间、计算每日加班、标记异常记录，并生成可追溯的月度统计和 AI 总结。",
+  primaryAction: "进入统计看板",
+  footerLinks: [
+    { label: "导入打卡数据", href: "/dashboard/import" },
+    { label: "查看加班趋势", href: "/dashboard" },
+    { label: "生成月报总结", href: "/dashboard/ai" },
+  ],
+};
 
 export function LandingPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -141,17 +166,17 @@ export function LandingPage() {
         <div className="liquid-glass mx-auto flex max-w-5xl items-center justify-between rounded-full px-6 py-3">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-white">
-              <Globe size={24} aria-hidden="true" />
-              <span>Asme</span>
+              <Clock3 size={24} aria-hidden="true" />
+              <span>{LANDING_COPY.brand}</span>
             </Link>
             <div className="hidden items-center gap-8 md:flex">
-              {["Features", "Pricing", "About"].map((item) => (
+              {LANDING_COPY.navItems.map((item) => (
                 <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
+                  key={item.label}
+                  href={item.href}
                   className="text-sm font-medium text-white/80 transition-colors hover:text-white"
                 >
-                  {item}
+                  {item.label}
                 </a>
               ))}
             </div>
@@ -159,13 +184,13 @@ export function LandingPage() {
 
           <div className="flex items-center gap-4">
             <Link href="/auth/register" className="text-sm font-medium text-white">
-              Sign Up
+              {LANDING_COPY.auth.register}
             </Link>
             <Link
               href="/auth/login"
               className="liquid-glass rounded-full px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-white/5"
             >
-              Login
+              {LANDING_COPY.auth.login}
             </Link>
           </div>
         </div>
@@ -173,10 +198,10 @@ export function LandingPage() {
 
       <section className="relative z-10 flex flex-1 -translate-y-[20%] flex-col items-center justify-center px-6 py-12 text-center">
         <h1
-          className="mb-8 whitespace-nowrap text-5xl tracking-tight text-white md:text-6xl lg:text-7xl"
+          className="mb-8 max-w-4xl text-5xl tracking-tight text-white md:text-6xl lg:text-7xl"
           style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          Built for the curious
+          {LANDING_COPY.heroTitle}
         </h1>
 
         <div className="w-full max-w-xl space-y-4">
@@ -186,13 +211,13 @@ export function LandingPage() {
           >
             <input
               type="email"
-              aria-label="Email address"
-              placeholder="Enter your email"
+              aria-label={LANDING_COPY.emailAriaLabel}
+              placeholder={LANDING_COPY.emailPlaceholder}
               className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/40"
             />
             <button
               type="submit"
-              aria-label="Subscribe"
+              aria-label={LANDING_COPY.submitAriaLabel}
               className="rounded-full bg-white p-3 text-black transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
             >
               <ArrowRight size={20} aria-hidden="true" />
@@ -200,8 +225,7 @@ export function LandingPage() {
           </form>
 
           <p className="px-4 text-sm leading-relaxed text-white">
-            Stay updated with the latest news and insights. Subscribe to our newsletter today and
-            never miss out on exciting updates.
+            {LANDING_COPY.heroDescription}
           </p>
 
           <div className="flex justify-center">
@@ -209,7 +233,7 @@ export function LandingPage() {
               href="/dashboard"
               className="liquid-glass rounded-full px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-white/5"
             >
-              Manifesto
+              {LANDING_COPY.primaryAction}
             </Link>
           </div>
         </div>
@@ -217,17 +241,17 @@ export function LandingPage() {
 
       <footer className="relative z-10 flex justify-center gap-4 pb-12">
         {[
-          { label: "Instagram", icon: AtSign, href: "https://instagram.com" },
-          { label: "Twitter", icon: MessageCircle, href: "https://twitter.com" },
-          { label: "Website", icon: Globe, href: "/" },
-        ].map((social) => (
+          { ...LANDING_COPY.footerLinks[0], icon: FileSpreadsheet },
+          { ...LANDING_COPY.footerLinks[1], icon: BarChart3 },
+          { ...LANDING_COPY.footerLinks[2], icon: Bot },
+        ].map((item) => (
           <a
-            key={social.label}
-            href={social.href}
-            aria-label={social.label}
+            key={item.label}
+            href={item.href}
+            aria-label={item.label}
             className="liquid-glass rounded-full p-4 text-white/80 transition-all hover:bg-white/5 hover:text-white"
           >
-            <social.icon size={20} aria-hidden="true" />
+            <item.icon size={20} aria-hidden="true" />
           </a>
         ))}
       </footer>
