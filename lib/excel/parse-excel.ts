@@ -42,7 +42,7 @@ export function parseExcelBuffer(
   return {
     headers,
     mapping,
-    rows: previewRows.slice(0, 20),
+    rows: previewRows,
     totalRows: rows.length,
     validRows: previewRows.filter((row) => row.errors.length === 0).length,
     invalidRows: previewRows.filter((row) => row.errors.length > 0).length,

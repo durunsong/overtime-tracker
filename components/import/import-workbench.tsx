@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ImportPreview } from "@/types/import";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { toDateKey } from "@/lib/attendance/parser";
 
 type ScreenshotImportResult = {
   preview: ImportPreview;
@@ -255,10 +256,10 @@ export function ImportWorkbench() {
                     </tr>
                   </thead>
                   <tbody>
-                    {preview.rows.map((row) => (
+                    {preview.rows.slice(0, 20).map((row) => (
                       <tr key={row.rowNumber} className="border-t border-white/8">
                         <td className="px-3 py-2">{row.rowNumber}</td>
-                        <td className="px-3 py-2">{row.record?.workDate ? new Date(row.record.workDate).toISOString().slice(0, 10) : "-"}</td>
+                        <td className="px-3 py-2">{row.record?.workDate ? toDateKey(row.record.workDate) : "-"}</td>
                         <td className="px-3 py-2">{row.record?.rawCheckInText ?? "-"}</td>
                         <td className="px-3 py-2">{row.record?.rawCheckOutText ?? "-"}</td>
                         <td className="px-3 py-2">{formatMinutes(row.record?.overtimeMinutes ?? 0)}</td>
