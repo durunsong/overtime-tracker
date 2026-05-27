@@ -118,7 +118,7 @@ export function AiAssistant() {
   );
 }
 
-function AiThinking({ text }: { text: string }) {
+export function AiThinking({ text }: { text: string }) {
   return (
     <div className="ai-thinking mt-4" aria-live="polite" aria-label={text}>
       <span className="ai-thinking__icon" aria-hidden="true" />
@@ -134,7 +134,7 @@ function AiThinking({ text }: { text: string }) {
   );
 }
 
-function MarkdownAnswer({ content }: { content: string }) {
+export function MarkdownAnswer({ content }: { content: string }) {
   return (
     <div className="space-y-4">
       <ReactMarkdown

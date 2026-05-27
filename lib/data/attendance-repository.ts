@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { getPrisma } from "@/lib/prisma";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
+import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
 import type {
   AttendanceRecordView,
   AttendanceSource,
@@ -31,6 +32,16 @@ export async function getDefaultUserId() {
   return requireCurrentUserId();
 }
 
+export async function loadDefaultWorkRuleForUser(userId: string): Promise<WorkRuleInput> {
+  const prisma = getPrisma();
+  const rule = await prisma.workRule.findFirst({
+    where: { userId, isDefault: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return rule ?? defaultWorkRule;
+}
+
 export async function loadAttendanceRecords(month?: string) {
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
@@ -44,7 +55,7 @@ export async function loadAttendanceRecords(month?: string) {
 
 export async function createAttendanceRecord(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
-  const calculation = calculateDailyAttendance(input);
+  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.create({
     data: {
@@ -69,7 +80,7 @@ export async function createAttendanceRecord(input: AttendanceInput) {
 
 export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
-  const calculation = calculateDailyAttendance(input);
+  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.upsert({
     where: { userId_workDate: { userId, workDate: input.workDate } },
@@ -108,9 +119,9 @@ export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
 }
 
 export async function updateAttendanceRecord(id: string, input: AttendanceInput) {
-  const calculation = calculateDailyAttendance(input);
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
+  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
   const record = await prisma.attendanceRecord.update({
     where: { id, userId },
     data: {

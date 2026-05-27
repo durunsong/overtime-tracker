@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Clipboard, Download, Printer, Sparkles } from "lucide-react";
+import { Bot, Clipboard, Copy, Download, Printer, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { DailyOvertimeBar } from "@/components/charts/overtime-charts";
+import { AiThinking, MarkdownAnswer } from "@/components/ai/ai-assistant";
 import type { AttendanceRecordView } from "@/types/attendance";
 import { generateMonthlyReport, buildReportText } from "@/lib/reports/monthly";
 import { formatMinutes } from "@/lib/attendance/formatter";
@@ -14,20 +15,43 @@ import { formatMinutes } from "@/lib/attendance/formatter";
 export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[] }) {
   const [month, setMonth] = useState("2026-05");
   const [aiSummary, setAiSummary] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const report = useMemo(() => generateMonthlyReport(records, month), [month, records]);
 
   async function generateAiSummary() {
+    setAiLoading(true);
+    setAiSummary("");
+
     const response = await fetch("/api/ai/report-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ month }),
     });
-    const result = await response.json();
-    if (result.success) {
-      setAiSummary(result.data.summary);
+
+    if (!response.ok || !response.body) {
+      const result = await response.json().catch(() => null);
+      setAiLoading(false);
+      toast.error(result?.error ?? "生成失败");
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        setAiSummary((current) => current + chunk);
+      }
       toast.success("AI 总结已生成");
-    } else {
-      toast.error(result.error ?? "生成失败");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "AI 总结中断，请稍后重试");
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -72,8 +96,8 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
               value={month}
               onChange={setMonth}
             />
-            <Button onClick={generateAiSummary}>
-              <Sparkles className="h-4 w-4" /> AI 总结
+            <Button onClick={generateAiSummary} disabled={aiLoading}>
+              <Sparkles className="h-4 w-4" /> {aiLoading ? "生成中" : "AI 总结"}
             </Button>
             <Button variant="secondary" onClick={exportExcel}>
               <Download className="h-4 w-4" /> 导出 Excel
@@ -117,13 +141,33 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>AI 总结与异常说明</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-cyan-200" /> AI 总结与异常说明
+            </CardTitle>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={!aiSummary}
+              onClick={() => {
+                void navigator.clipboard.writeText(aiSummary);
+                toast.success("已复制");
+              }}
+            >
+              <Copy className="h-4 w-4" /> 复制
+            </Button>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-line text-sm leading-7 text-slate-300">
-              {aiSummary || "点击 AI 总结后，将基于当前月份真实统计数据生成正式月报文本。"}
-            </p>
+            <div className="h-[424px] overflow-y-auto rounded-lg border border-white/10 bg-slate-950/50 p-5 text-sm leading-7 text-slate-300">
+              {aiSummary ? (
+                <MarkdownAnswer content={aiSummary} />
+              ) : (
+                <p className="text-slate-500">
+                  点击 AI 总结后，将基于当前月份真实统计数据生成正式月报文本。
+                </p>
+              )}
+              {aiLoading ? <AiThinking text="AI 正在整理月报和异常说明，请稍等。" /> : null}
+            </div>
           </CardContent>
         </Card>
       </div>

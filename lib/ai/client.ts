@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText } from "ai";
+import { generateText, streamText, type StreamTextOnFinishCallback, type ToolSet } from "ai";
 
 export function isAiConfigured() {
   return Boolean(process.env.AI_API_KEY && process.env.AI_BASE_URL && process.env.AI_MODEL);
@@ -28,10 +28,14 @@ export async function generateAiText(prompt: string) {
   return result.text;
 }
 
-export function streamAiText(prompt: string) {
+export function streamAiText(
+  prompt: string,
+  options?: { onFinish?: StreamTextOnFinishCallback<ToolSet> },
+) {
   return streamText({
     model: getAiLanguageModel(),
     prompt,
     temperature: 0.2,
+    onFinish: options?.onFinish,
   });
 }

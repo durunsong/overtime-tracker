@@ -58,6 +58,24 @@ describe("attendance calculation", () => {
     expect(result.status).toBe("LATE");
   });
 
+  it("counts actual weekend work when leaving before the normal end time", () => {
+    const workDate = new Date("2026-05-23T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("08:50", workDate),
+        checkOutTime: parseTime("11:30", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        weekendEnabled: true,
+      },
+    );
+
+    expect(result.actualWorkMinutes).toBe(120);
+    expect(result.overtimeMinutes).toBe(120);
+  });
+
   it("marks missing punches and reversed time as abnormal", () => {
     const workDate = new Date("2026-05-05T00:00:00");
     expect(

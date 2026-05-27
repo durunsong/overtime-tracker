@@ -4,6 +4,8 @@ import { defaultWorkRule } from "@/types/attendance";
 import { calculateDailyAttendance } from "./calculate";
 import { parseExcelDate, parseTime } from "./parser";
 
+const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+
 export const attendanceRecordSchema = z.object({
   workDate: z.coerce.date(),
   checkInTime: z.coerce.date().nullable().optional(),
@@ -21,10 +23,10 @@ export const recordQuerySchema = z.object({
 
 export const workRuleSchema = z.object({
   name: z.string().min(1).default("默认工作日规则"),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  startTime: timeSchema,
+  endTime: timeSchema,
   standardWorkMinutes: z.coerce.number().int().positive(),
-  overtimeStartTime: z.string().regex(/^\d{2}:\d{2}$/),
+  overtimeStartTime: timeSchema,
   beforeStartNotCount: z.boolean(),
   lunchBreakEnabled: z.boolean(),
   lunchBreakMinutes: z.coerce.number().int().min(0),

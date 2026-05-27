@@ -95,25 +95,39 @@ export function RulesForm() {
             午休分钟
             <Input type="number" {...register("lunchBreakMinutes", { valueAsNumber: true })} />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" {...register("beforeStartNotCount")} />
-            9:30 前打卡不额外算工时
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" {...register("lunchBreakEnabled")} />
-            启用午休扣减
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" {...register("weekendEnabled")} />
-            周末打卡按加班统计，最多算 8 小时
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" {...register("holidayEnabled")} />
-            节假日纳入统计
-          </label>
-          <p className="md:col-span-2 xl:col-span-3 text-sm text-slate-400">
-            双休制建议开启“9:30 前打卡不额外算工时”和“周末打卡按加班统计”。周末 9:30 前到且 19:00 后走，最多按 8 小时；9:30 后到会从 8 小时里扣掉迟到分钟。
-          </p>
+          <fieldset className="md:col-span-2 xl:col-span-3">
+            <legend className="mb-3 text-sm font-medium text-slate-200">统计开关</legend>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <label className="grid min-h-24 gap-2 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">
+                <span className="flex items-center gap-2 font-medium text-slate-100">
+                  <input type="checkbox" {...register("beforeStartNotCount")} />
+                  早到不多算
+                </span>
+                <span className="text-xs leading-5 text-slate-500">9:30 前到岗仍从 9:30 开始计算。</span>
+              </label>
+              <label className="grid min-h-24 gap-2 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">
+                <span className="flex items-center gap-2 font-medium text-slate-100">
+                  <input type="checkbox" {...register("lunchBreakEnabled")} />
+                  午休扣减
+                </span>
+                <span className="text-xs leading-5 text-slate-500">开启后从当天出勤时长里扣除午休分钟。</span>
+              </label>
+              <label className="grid min-h-24 gap-2 rounded-md border border-cyan-300/20 bg-cyan-300/[0.04] p-3 text-sm text-slate-300">
+                <span className="flex items-center gap-2 font-medium text-cyan-50">
+                  <input type="checkbox" {...register("weekendEnabled")} />
+                  周末加班
+                </span>
+                <span className="text-xs leading-5 text-slate-400">双休周末打卡按加班统计，最多 8 小时，迟到从 8 小时内扣减。</span>
+              </label>
+              <label className="grid min-h-24 gap-2 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">
+                <span className="flex items-center gap-2 font-medium text-slate-100">
+                  <input type="checkbox" {...register("holidayEnabled")} />
+                  节假日统计
+                </span>
+                <span className="text-xs leading-5 text-slate-500">用于法定节假日口径，和普通双休周末分开控制。</span>
+              </label>
+            </div>
+          </fieldset>
           <div className="md:col-span-2 xl:col-span-3">
             <Button type="submit">
               <Save className="h-4 w-4" /> 保存为默认规则

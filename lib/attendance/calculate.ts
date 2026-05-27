@@ -70,8 +70,9 @@ export function calculateDailyAttendance(
     differenceInMinutes(end, input.checkOutTime),
   );
   const isCountedWeekend = rule.weekendEnabled && isWeekend(input.workDate);
+  const weekendWorkLimit = Math.max(0, standardWorkMinutes - lateMinutes);
   const actualWorkMinutes = isCountedWeekend
-    ? Math.max(0, standardWorkMinutes - lateMinutes - earlyLeaveMinutes)
+    ? Math.min(rawActualWorkMinutes, weekendWorkLimit)
     : rawActualWorkMinutes;
   const overtimeMinutes = isCountedWeekend
     ? actualWorkMinutes

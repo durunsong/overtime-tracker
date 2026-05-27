@@ -2,7 +2,8 @@ import { z } from "zod";
 import { AttendanceStatus } from "@prisma/client";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
-import { getDefaultUserId } from "@/lib/data/attendance-repository";
+import { getDefaultUserId, loadDefaultWorkRuleForUser } from "@/lib/data/attendance-repository";
+import { normalizeImportedRecord } from "@/lib/excel/import-records";
 
 const confirmSchema = z.object({
   fileName: z.string().min(1),
@@ -22,7 +23,15 @@ const confirmSchema = z.object({
           overtimeMinutes: z.number(),
           lateMinutes: z.number(),
           earlyLeaveMinutes: z.number(),
-          status: z.string(),
+          status: z.enum([
+            "NORMAL",
+            "LATE",
+            "EARLY_LEAVE",
+            "ABSENT",
+            "REST_DAY",
+            "HOLIDAY",
+            "ABNORMAL",
+          ]),
           remark: z.string().nullable().optional(),
         })
         .optional(),
@@ -45,6 +54,7 @@ export async function POST(request: Request) {
 
     const prisma = getPrisma();
     const userId = await getDefaultUserId();
+    const rule = await loadDefaultWorkRuleForUser(userId);
     const batch = await prisma.importBatch.create({
       data: {
         userId,
@@ -58,8 +68,8 @@ export async function POST(request: Request) {
     });
 
     for (const row of validRows) {
-      const record = row.record;
-      if (!record) continue;
+      if (!row.record) continue;
+      const record = normalizeImportedRecord(row.record, rule);
       await prisma.attendanceRecord.upsert({
         where: { userId_workDate: { userId, workDate: record.workDate } },
         update: {
