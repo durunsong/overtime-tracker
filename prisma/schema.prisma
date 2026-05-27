@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AttendanceStatus {
+  NORMAL
+  LATE
+  EARLY_LEAVE
+  ABSENT
+  REST_DAY
+  HOLIDAY
+  ABNORMAL
+}
+
+enum AttendanceSource {
+  MANUAL
+  EXCEL_IMPORT
+}
+
+enum ImportBatchStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  PARTIAL_SUCCESS
+}
+
+model User {
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  passwordHash      String?
+  avatar            String?
+  sessions          UserSession[]
+  passwordResets    PasswordResetToken[]
+  attendanceRecords AttendanceRecord[]
+  importBatches     ImportBatch[]
+  workRules         WorkRule[]
+  monthlyReports    MonthlyReport[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model UserSession {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String   @unique
+  expiresAt    DateTime
+  lastUsedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AttendanceRecord {
+  id                  String           @id @default(cuid())
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workDate            DateTime
+  checkInTime         DateTime?
+  checkOutTime        DateTime?
+  rawCheckInText      String?
+  rawCheckOutText     String?
+  actualWorkMinutes   Int              @default(0)
+  standardWorkMinutes Int              @default(480)
+  overtimeMinutes     Int              @default(0)
+  lateMinutes         Int              @default(0)
+  earlyLeaveMinutes   Int              @default(0)
+  status              AttendanceStatus @default(NORMAL)
+  source              AttendanceSource @default(MANUAL)
+  importBatchId       String?
+  importBatch         ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  remark              String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([userId, workDate])
+  @@index([status])
+  @@unique([userId, workDate])
+}
+
+model ImportBatch {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName          String
+  fileSize          Int
+  totalRows         Int                 @default(0)
+  successRows       Int                 @default(0)
+  failedRows        Int                 @default(0)
+  status            ImportBatchStatus   @default(PENDING)
+  errorMessage      String?
+  attendanceRecords AttendanceRecord[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model WorkRule {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  startTime            String   @default("09:30")
+  endTime              String   @default("19:00")
+  standardWorkMinutes  Int      @default(480)
+  overtimeStartTime    String   @default("19:00")
+  beforeStartNotCount  Boolean  @default(true)
+  lunchBreakEnabled    Boolean  @default(false)
+  lunchBreakMinutes    Int      @default(0)
+  weekendEnabled       Boolean  @default(false)
+  holidayEnabled       Boolean  @default(false)
+  isDefault            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([userId, isDefault])
+}
+
+model MonthlyReport {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month               String
+  workDays            Int      @default(0)
+  actualWorkMinutes   Int      @default(0)
+  standardWorkMinutes Int      @default(0)
+  overtimeMinutes     Int      @default(0)
+  lateCount           Int      @default(0)
+  earlyLeaveCount     Int      @default(0)
+  abnormalCount       Int      @default(0)
+  reportJson          Json
+  aiSummary           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([userId, month])
+  @@index([month])
+}

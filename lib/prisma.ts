@@ -1,0 +1,33 @@
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
+type PrismaGlobal = typeof globalThis & {
+  __overtimePrisma?: PrismaClient;
+  __overtimePgPool?: Pool;
+};
+
+const globalForPrisma = globalThis as PrismaGlobal;
+
+export function isDatabaseConfigured() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+export function getPrisma() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL 未配置，无法初始化 Prisma Client");
+  }
+
+  if (!globalForPrisma.__overtimePgPool) {
+    globalForPrisma.__overtimePgPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+  }
+
+  if (!globalForPrisma.__overtimePrisma) {
+    const adapter = new PrismaPg(globalForPrisma.__overtimePgPool);
+    globalForPrisma.__overtimePrisma = new PrismaClient({ adapter });
+  }
+
+  return globalForPrisma.__overtimePrisma;
+}

@@ -1,0 +1,37 @@
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const month = format(new Date(), "yyyy-MM");
+  let report;
+
+  try {
+    const records = await loadAttendanceRecords(month);
+    report = generateMonthlyReport(records, month);
+  } catch (error) {
+    return <DatabaseError error={error} />;
+  }
+
+  return <DashboardOverview report={report} />;
+}
+
+function DatabaseError({ error }: { error: unknown }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>数据库连接不可用</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm leading-7 text-slate-400">
+          系统仅使用真实数据库数据，请先确认 `.env` 中的 `DATABASE_URL` 可连接，并完成 Prisma
+          迁移。错误信息：{error instanceof Error ? error.message : "未知错误"}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -8,8 +9,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +23,246 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(103, 232, 249, 0.35);
+  color: white;
+}
+
+.liquid-glass {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.liquid-glass::before {
+  position: absolute;
+  inset: 0;
+  padding: 1.4px;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  content: "";
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.ai-thinking {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 10px;
+  color: #cffafe;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ai-thinking__icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border-radius: 999px;
+}
+
+.ai-thinking__icon::before,
+.ai-thinking__icon::after {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: inherit;
+  content: "";
+}
+
+.ai-thinking__icon::before {
+  border: 2px solid rgb(103 232 249 / 18%);
+}
+
+.ai-thinking__icon::after {
+  border: 2px solid transparent;
+  border-right-color: #67e8f9;
+  border-top-color: #67e8f9;
+  animation: ai-thinking-spin 0.9s linear infinite;
+}
+
+.ai-thinking__text {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  color: #e0f2fe;
+}
+
+.ai-thinking__text::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 38%;
+  background: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 8%) 20%, rgb(255 255 255 / 65%) 50%, rgb(255 255 255 / 8%) 80%, transparent 100%);
+  content: "";
+  pointer-events: none;
+  transform: skewX(-18deg);
+  animation: ai-thinking-sweep 1.6s ease-in-out infinite;
+}
+
+.ai-thinking__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  transform: translateY(1px);
+}
+
+.ai-thinking__dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  opacity: 0.3;
+  animation: ai-thinking-dot 1.25s ease-in-out infinite;
+}
+
+.ai-thinking__dots span:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.ai-thinking__dots span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+.auth-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(circle at 55% 42%, black 36%, transparent 86%);
+  animation: auth-grid-drift 22s linear infinite alternate;
+}
+
+.auth-scanline {
+  background: linear-gradient(180deg, transparent, rgba(103, 232, 249, 0.055), transparent);
+  background-size: 100% 240px;
+  animation: auth-scanline 10s ease-in-out infinite;
+}
+
+.auth-card-3d {
+  transform-style: preserve-3d;
+  transition:
+    transform 480ms ease,
+    border-color 220ms ease,
+    box-shadow 480ms ease;
+}
+
+.auth-card-3d:hover {
+  border-color: rgba(103, 232, 249, 0.26);
+  box-shadow: 0 34px 100px rgba(8, 47, 73, 0.42);
+  transform: rotateX(3deg) rotateY(-4deg) translateY(-2px);
+}
+
+.auth-reveal {
+  animation: auth-reveal 620ms ease both;
+}
+
+@keyframes ai-thinking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ai-thinking-sweep {
+  0% {
+    left: -45%;
+    opacity: 0;
+  }
+
+  18%,
+  58% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 110%;
+    opacity: 0;
+  }
+}
+
+@keyframes ai-thinking-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 0.9;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes auth-grid-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(30px, 24px, 0);
+  }
+}
+
+@keyframes auth-scanline {
+  0%,
+  100% {
+    background-position: 0 -240px;
+    opacity: 0.4;
+  }
+
+  50% {
+    background-position: 0 100vh;
+    opacity: 0.9;
+  }
+}
+
+@keyframes auth-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-grid,
+  .auth-scanline,
+  .auth-reveal,
+  .auth-card-3d {
+    animation: none;
+    transition: none;
+  }
+
+  .auth-card-3d:hover {
+    transform: none;
+  }
 }
