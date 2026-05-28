@@ -170,7 +170,9 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
                   <DayBadge day={day} />
                 </div>
                 <div className="mt-2 min-h-5 text-left text-xs text-slate-500">
-                  {day.name ?? day.lunarText ?? kindLabel[day.kind]}
+                  <span className="block truncate">
+                    {day.name ? `${day.name} · ${day.lunarText}` : day.lunarText ?? kindLabel[day.kind]}
+                  </span>
                 </div>
                 <div className="mt-3 space-y-1 text-left text-xs">
                   {day.record ? (

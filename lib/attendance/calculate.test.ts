@@ -178,6 +178,8 @@ describe("attendance calculation", () => {
   it("marks China holidays on the monthly calendar", () => {
     expect(getChinaCalendarMeta(new Date("2026-10-01T00:00:00")).kind).toBe("HOLIDAY");
     expect(getChinaCalendarMeta(new Date("2026-05-09T00:00:00")).kind).toBe("ADJUSTED_WORKDAY");
+    expect(getChinaCalendarMeta(new Date("2026-05-09T00:00:00")).lunarText).toBe("三月廿三");
+    expect(getChinaCalendarMeta(new Date("2026-05-23T00:00:00")).lunarText).toBe("四月初七");
     const month = buildCalendarMonth("2026-10", []);
     expect(month.days.some((day) => day.date === "2026-10-01" && day.name === "国庆节")).toBe(true);
   });

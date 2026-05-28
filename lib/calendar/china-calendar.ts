@@ -14,18 +14,21 @@ import type { AttendanceRecordView } from "@/types/attendance";
 import type { CalendarMonth, ChinaCalendarMeta } from "@/types/calendar";
 import { toDateKey } from "@/lib/attendance/parser";
 import { getChinaHolidayDefinition } from "@/lib/calendar/china-holiday-rules";
+import { formatChineseLunarDate } from "@/lib/calendar/lunar";
 
 export function getChinaCalendarMeta(date: Date): ChinaCalendarMeta {
   const key = toDateKey(date);
+  const lunarText = formatChineseLunarDate(date);
   const holiday = getChinaHolidayDefinition(key);
   if (holiday) {
-    return { date: key, ...holiday };
+    return { date: key, ...holiday, lunarText: holiday.lunarText ?? lunarText };
   }
 
   const weekday = getDay(date);
   return {
     date: key,
     kind: weekday === 0 || weekday === 6 ? "WEEKEND" : "WORKDAY",
+    lunarText,
     wageRate: 1,
   };
 }

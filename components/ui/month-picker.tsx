@@ -77,18 +77,18 @@ export function MonthPicker({
   }
 
   return (
-    <div ref={rootRef} className={cn("relative", open ? "z-[120]" : "z-0", className)}>
+    <div ref={rootRef} className={cn("relative min-w-[9.75rem]", open ? "z-[120]" : "z-0", className)}>
       <button
         type="button"
         aria-label={ariaLabel}
         aria-expanded={open}
         onClick={toggleOpen}
-        className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-white/12 bg-slate-950/60 px-3 text-sm text-white outline-none transition hover:border-cyan-200/45 hover:bg-white/8 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
+        className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-white/12 bg-slate-950/60 px-3 text-sm text-white outline-none transition hover:border-cyan-200/45 hover:bg-white/8 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
       >
-        <span className={cn("tabular-nums", value ? "text-white" : "text-slate-500")}>
+        <span className={cn("whitespace-nowrap font-semibold tabular-nums", value ? "text-white" : "text-slate-500")}>
           {selected ? `${selected.year}年 ${selected.month}月` : "选择月份"}
         </span>
-        <CalendarDays className="h-4 w-4 text-cyan-200/80" />
+        <CalendarDays className="h-4 w-4 shrink-0 text-cyan-200/80" />
       </button>
 
       {open ? (
