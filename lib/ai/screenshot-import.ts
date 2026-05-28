@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { z } from "zod";
+import { toDateKey } from "@/lib/attendance/parser";
 import { validateAttendanceRow } from "@/lib/attendance/validators";
 import { getAiLanguageModel } from "./client";
 import { buildScreenshotImportPrompt } from "./prompts";
@@ -81,10 +82,7 @@ export function chunkScreenshotImportFiles(files: ScreenshotImportFile[]) {
 }
 
 export function mergeScreenshotImportPreviews(previews: ImportPreview[]): ImportPreview {
-  const rows = previews.flatMap((preview) => preview.rows).map((row, index) => ({
-    ...row,
-    rowNumber: index + 1,
-  }));
+  const rows = normalizePreviewRows(previews.flatMap((preview) => preview.rows));
 
   return {
     headers: ["date", "name", "checkIn", "checkOut", "remark"],
@@ -161,6 +159,8 @@ export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview
     };
   });
 
+  const normalizedRows = normalizePreviewRows(previewRows);
+
   return {
     headers: ["date", "name", "checkIn", "checkOut", "remark"],
     mapping: {
@@ -170,11 +170,86 @@ export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview
       checkOut: "checkOut",
       remark: "remark",
     },
-    rows: previewRows,
-    totalRows: previewRows.length,
-    validRows: previewRows.filter((row) => row.errors.length === 0).length,
-    invalidRows: previewRows.filter((row) => row.errors.length > 0).length,
+    rows: normalizedRows,
+    totalRows: normalizedRows.length,
+    validRows: normalizedRows.filter((row) => row.errors.length === 0).length,
+    invalidRows: normalizedRows.filter((row) => row.errors.length > 0).length,
   };
+}
+
+type PreviewRow = ImportPreview["rows"][number];
+
+function normalizePreviewRows(rows: PreviewRow[]): PreviewRow[] {
+  const validRowsByDate = new Map<string, PreviewRow>();
+  const passthroughRows: PreviewRow[] = [];
+
+  for (const row of rows) {
+    if (!row.record || row.errors.length > 0) {
+      passthroughRows.push(row);
+      continue;
+    }
+
+    const dateKey = toDateKey(row.record.workDate);
+    const existing = validRowsByDate.get(dateKey);
+    validRowsByDate.set(dateKey, existing ? mergeValidPreviewRows(existing, row) : row);
+  }
+
+  return [...validRowsByDate.values(), ...passthroughRows].map((row, index) => ({
+    ...row,
+    rowNumber: index + 1,
+  }));
+}
+
+function mergeValidPreviewRows(left: PreviewRow, right: PreviewRow): PreviewRow {
+  const leftCheckIn = left.record?.checkInTime?.getTime();
+  const rightCheckIn = right.record?.checkInTime?.getTime();
+  const leftCheckOut = left.record?.checkOutTime?.getTime();
+  const rightCheckOut = right.record?.checkOutTime?.getTime();
+  const checkIn = chooseTimeText(rawText(left.raw.checkIn), leftCheckIn, rawText(right.raw.checkIn), rightCheckIn, "earliest");
+  const checkOut = chooseTimeText(rawText(left.raw.checkOut), leftCheckOut, rawText(right.raw.checkOut), rightCheckOut, "latest");
+  const remark = [rawText(left.raw.remark), rawText(right.raw.remark)].filter(Boolean).join("；");
+  const validation = validateAttendanceRow({
+    name: rawText(left.raw.name) || rawText(right.raw.name) || undefined,
+    date: rawText(left.raw.date) || rawText(right.raw.date),
+    checkIn: checkIn || undefined,
+    checkOut: checkOut || undefined,
+    remark: remark || undefined,
+  });
+
+  return {
+    rowNumber: left.rowNumber,
+    raw: {
+      date: rawText(left.raw.date) || rawText(right.raw.date),
+      name: rawText(left.raw.name) || rawText(right.raw.name),
+      checkIn,
+      checkOut,
+      remark,
+    },
+    record: validation.record ?? undefined,
+    errors: validation.errors,
+  };
+}
+
+function rawText(value: unknown) {
+  return value == null ? "" : String(value);
+}
+
+function chooseTimeText(
+  leftText: string,
+  leftTime: number | undefined,
+  rightText: string,
+  rightTime: number | undefined,
+  mode: "earliest" | "latest",
+) {
+  if (leftTime == null) return rightText;
+  if (rightTime == null) return leftText;
+  return mode === "earliest"
+    ? leftTime <= rightTime
+      ? leftText
+      : rightText
+    : leftTime >= rightTime
+      ? leftText
+      : rightText;
 }
 
 function isHeaderLikeRecord(row: AiRecord) {

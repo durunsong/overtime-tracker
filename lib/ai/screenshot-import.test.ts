@@ -33,6 +33,21 @@ describe("buildScreenshotImportPreview", () => {
     expect(preview.rows[0]?.record?.overtimeMinutes).toBe(5);
     expect(preview.rows[0]?.errors).toEqual([]);
   });
+
+  it("merges duplicate valid dates using earliest check-in and latest check-out", () => {
+    const preview = buildScreenshotImportPreview([
+      { date: "2026-05-27", name: "", checkIn: "09:15", checkOut: "22:31", remark: "first" },
+      { date: "2026-05-27", name: "", checkIn: "09:18", checkOut: "22:24", remark: "second" },
+    ]);
+
+    expect(preview.totalRows).toBe(1);
+    expect(preview.validRows).toBe(1);
+    expect(preview.rows[0]?.raw.checkIn).toBe("09:15");
+    expect(preview.rows[0]?.raw.checkOut).toBe("22:31");
+    expect(preview.rows[0]?.record?.rawCheckInText).toBe("09:15");
+    expect(preview.rows[0]?.record?.rawCheckOutText).toBe("22:31");
+    expect(preview.rows[0]?.record?.overtimeMinutes).toBe(211);
+  });
 });
 
 describe("chunkScreenshotImportFiles", () => {
@@ -66,6 +81,22 @@ describe("mergeScreenshotImportPreviews", () => {
     expect(merged.validRows).toBe(2);
     expect(merged.invalidRows).toBe(1);
     expect(merged.rows.map((row) => row.rowNumber)).toEqual([1, 2, 3]);
+  });
+
+  it("deduplicates valid rows across AI batches by work date", () => {
+    const first = buildScreenshotImportPreview([
+      { date: "2026-05-27", name: "", checkIn: "09:15", checkOut: "22:24", remark: "" },
+    ]);
+    const second = buildScreenshotImportPreview([
+      { date: "2026-05-27", name: "", checkIn: "09:20", checkOut: "22:31", remark: "" },
+    ]);
+
+    const merged = mergeScreenshotImportPreviews([first, second]);
+
+    expect(merged.totalRows).toBe(1);
+    expect(merged.validRows).toBe(1);
+    expect(merged.rows[0]?.raw.checkIn).toBe("09:15");
+    expect(merged.rows[0]?.raw.checkOut).toBe("22:31");
   });
 });
 
