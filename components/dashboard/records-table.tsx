@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import type { AttendanceRecordView, AttendanceStatus } from "@/types/attendance";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
-import { DEFAULT_RECORD_FILTERS, resetRecordFilters } from "./records-filter";
+import { DEFAULT_RECORD_FILTERS, isRecordStatusFilter, resetRecordFilters } from "./records-filter";
 
 const statusLabel: Record<AttendanceStatus, string> = {
   NORMAL: "正常",
@@ -67,6 +67,12 @@ export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRec
     setStatus(nextFilters.status);
   }
 
+  function changeStatus(value: string) {
+    if (isRecordStatusFilter(value)) {
+      setStatus(value);
+    }
+  }
+
   function exportCsv() {
     const header = "日期,上班打卡,下班打卡,有效出勤,标准工时,加班时长,状态,来源,备注";
     const body = filtered
@@ -107,7 +113,7 @@ export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRec
           />
           <Select
             value={status}
-            onChange={setStatus}
+            onChange={changeStatus}
             options={statusOptions}
             className="w-32"
             aria-label="选择打卡状态"

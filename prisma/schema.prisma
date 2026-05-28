@@ -41,6 +41,7 @@ model User {
   importBatches     ImportBatch[]
   workRules         WorkRule[]
   monthlyReports    MonthlyReport[]
+  overtimeShares    OvertimeShare[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -155,5 +156,19 @@ model MonthlyReport {
   updatedAt           DateTime @updatedAt
 
   @@unique([userId, month])
+  @@index([month])
+}
+
+model OvertimeShare {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month        String
+  ownerName    String
+  snapshotJson Json
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
   @@index([month])
 }

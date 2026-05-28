@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Bot,
   CalendarDays,
   CalendarClock,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ShareOvertimeButton } from "@/components/dashboard/share-overtime-button";
 import type { AuthUser } from "@/lib/auth/session";
 
 const navItems = [
@@ -43,8 +44,8 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
       <div className="relative flex h-full min-h-0">
         <aside className="hidden h-dvh w-72 flex-none overflow-y-auto border-r border-white/10 bg-slate-950/70 px-5 py-6 backdrop-blur-xl lg:block">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-300 text-slate-950">
-              <BarChart3 className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-slate-950 ring-1 ring-cyan-200/30">
+              <Image src="/icon.svg" alt="" width={40} height={40} aria-hidden="true" priority />
             </div>
             <div>
               <p className="font-semibold text-white">Overtime Tracker</p>
@@ -91,6 +92,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 <Button asChild variant="secondary" size="sm">
                   <Link href="/dashboard/import">导入数据</Link>
                 </Button>
+                <ShareOvertimeButton />
                 <Button asChild size="sm">
                   <Link href="/dashboard/reports">生成月报</Link>
                 </Button>
