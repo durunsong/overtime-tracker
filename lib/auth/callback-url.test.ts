@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildLoginUrl, getSafeCallbackUrl } from "@/lib/auth/callback-url";
+import {
+  buildLoginUrl,
+  getAuthenticatedAuthRedirectUrl,
+  getSafeCallbackUrl,
+} from "@/lib/auth/callback-url";
 
 describe("auth callback url", () => {
   it("keeps an internal dashboard path with its query string", () => {
@@ -16,5 +20,13 @@ describe("auth callback url", () => {
     expect(buildLoginUrl("/dashboard/reports?month=2026-05")).toBe(
       "/auth/login?callbackUrl=%2Fdashboard%2Freports%3Fmonth%3D2026-05",
     );
+  });
+
+  it("redirects authenticated users away from auth pages to a safe target", () => {
+    expect(getAuthenticatedAuthRedirectUrl("/auth/login", "/dashboard/reports?month=2026-05")).toBe(
+      "/dashboard/reports?month=2026-05",
+    );
+    expect(getAuthenticatedAuthRedirectUrl("/auth/register", undefined)).toBe("/dashboard");
+    expect(getAuthenticatedAuthRedirectUrl("/dashboard", "/dashboard/reports")).toBeNull();
   });
 });

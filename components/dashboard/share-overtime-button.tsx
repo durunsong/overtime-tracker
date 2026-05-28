@@ -46,7 +46,7 @@ export function ShareOvertimeButton() {
   return (
     <Button variant="secondary" size="sm" onClick={shareOvertime} disabled={loading}>
       <Share2 className="h-4 w-4" />
-      {loading ? "生成中" : "分享我的加班"}
+      {loading ? "生成中" : "分享我的加班数据"}
     </Button>
   );
 }

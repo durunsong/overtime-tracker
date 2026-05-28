@@ -2,7 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-auth-callback-url", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  const currentUrl = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  requestHeaders.set("x-auth-callback-url", currentUrl);
+  requestHeaders.set("x-auth-current-path", request.nextUrl.pathname);
 
   return NextResponse.next({
     request: {
@@ -12,5 +14,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/dashboard/:path*",
+  matcher: ["/dashboard/:path*", "/auth/:path*"],
 };

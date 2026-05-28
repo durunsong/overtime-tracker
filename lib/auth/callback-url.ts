@@ -25,3 +25,11 @@ export function buildLoginUrl(callbackUrl: string | null | undefined) {
   const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
   return `/auth/login?callbackUrl=${encodeURIComponent(safeCallbackUrl)}`;
 }
+
+export function getAuthenticatedAuthRedirectUrl(
+  pathname: string | null | undefined,
+  callbackUrl: string | null | undefined,
+) {
+  if (!pathname?.startsWith("/auth")) return null;
+  return getSafeCallbackUrl(callbackUrl);
+}

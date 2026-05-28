@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   Activity,
   BarChart3,
@@ -8,6 +10,8 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { getAuthenticatedAuthRedirectUrl } from "@/lib/auth/callback-url";
+import { getCurrentUser } from "@/lib/auth/session";
 
 const stats = [
   { label: "本月出勤", value: "26 天", tone: "border-cyan-300/25 bg-cyan-300/10 text-cyan-100" },
@@ -23,7 +27,17 @@ const capabilities = [
 
 const timeline = ["登录账号", "导入考勤", "校验异常", "生成月报"];
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const [user, headerStore] = await Promise.all([getCurrentUser(), headers()]);
+  const redirectUrl = getAuthenticatedAuthRedirectUrl(
+    headerStore.get("x-auth-current-path"),
+    headerStore.get("x-auth-callback-url"),
+  );
+
+  if (user && redirectUrl) {
+    redirect(redirectUrl);
+  }
+
   return (
     <main className="auth-shell relative min-h-screen overflow-hidden bg-[#05070d] px-5 py-6 text-white">
       <div className="auth-grid pointer-events-none fixed inset-0 opacity-65" />
