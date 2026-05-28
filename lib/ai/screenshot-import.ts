@@ -11,6 +11,8 @@ export type ScreenshotImportFile = {
   buffer: ArrayBuffer;
 };
 
+const screenshotAiBatchSize = 3;
+
 const aiRecordSchema = z.object({
   date: z.string().min(1),
   name: z.string().nullish(),
@@ -28,6 +30,26 @@ type AiRecord = z.infer<typeof aiRecordSchema>;
 export async function parseAttendanceScreenshots(
   files: ScreenshotImportFile[],
 ): Promise<ImportPreview> {
+  return parseAttendanceScreenshotBatches(files, parseAttendanceScreenshotChunk);
+}
+
+export async function parseAttendanceScreenshotBatches(
+  files: ScreenshotImportFile[],
+  parseChunk: (files: ScreenshotImportFile[]) => Promise<ImportPreview>,
+): Promise<ImportPreview> {
+  const previews = [];
+  for (const chunk of chunkScreenshotImportFiles(files)) {
+    try {
+      previews.push(await parseChunk(chunk));
+    } catch (error) {
+      previews.push(buildFailedScreenshotChunkPreview(chunk, getErrorMessage(error)));
+    }
+  }
+
+  return mergeScreenshotImportPreviews(previews);
+}
+
+async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Promise<ImportPreview> {
   const result = await generateText({
     model: getAiLanguageModel(),
     messages: [
@@ -48,6 +70,70 @@ export async function parseAttendanceScreenshots(
 
   const parsed = aiResultSchema.parse(parseJsonObject(result.text));
   return buildScreenshotImportPreview(parsed.records);
+}
+
+export function chunkScreenshotImportFiles(files: ScreenshotImportFile[]) {
+  const chunks: ScreenshotImportFile[][] = [];
+  for (let index = 0; index < files.length; index += screenshotAiBatchSize) {
+    chunks.push(files.slice(index, index + screenshotAiBatchSize));
+  }
+  return chunks;
+}
+
+export function mergeScreenshotImportPreviews(previews: ImportPreview[]): ImportPreview {
+  const rows = previews.flatMap((preview) => preview.rows).map((row, index) => ({
+    ...row,
+    rowNumber: index + 1,
+  }));
+
+  return {
+    headers: ["date", "name", "checkIn", "checkOut", "remark"],
+    mapping: {
+      date: "date",
+      name: "name",
+      checkIn: "checkIn",
+      checkOut: "checkOut",
+      remark: "remark",
+    },
+    rows,
+    totalRows: rows.length,
+    validRows: rows.filter((row) => row.errors.length === 0).length,
+    invalidRows: rows.filter((row) => row.errors.length > 0).length,
+  };
+}
+
+function buildFailedScreenshotChunkPreview(files: ScreenshotImportFile[], message: string): ImportPreview {
+  const rows = files.map((file, index) => ({
+    rowNumber: index + 1,
+    raw: {
+      date: "",
+      name: "",
+      checkIn: "",
+      checkOut: "",
+      remark: file.fileName,
+    },
+    record: undefined,
+    errors: [`AI 识别失败：${message}`],
+  }));
+
+  return {
+    headers: ["date", "name", "checkIn", "checkOut", "remark"],
+    mapping: {
+      date: "date",
+      name: "name",
+      checkIn: "checkIn",
+      checkOut: "checkOut",
+      remark: "remark",
+    },
+    rows,
+    totalRows: rows.length,
+    validRows: 0,
+    invalidRows: rows.length,
+  };
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "当前批次处理失败";
 }
 
 export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview {

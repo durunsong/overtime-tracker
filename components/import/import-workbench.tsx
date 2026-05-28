@@ -3,7 +3,7 @@
 import type { ClipboardEvent } from "react";
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Download, FileUp, ImageUp, Loader2, Sparkles, UploadCloud } from "lucide-react";
+import { Download, FileImage, FileUp, ImageUp, Loader2, Sparkles, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
 import { getImportedRecordMonths } from "@/lib/import/import-summary";
 import { extractImageFilesFromClipboardItems } from "./clipboard-images";
+import { getImportDropzoneClassName, getImportDropzoneIconClassName } from "./import-dropzone-styles";
+import { appendScreenshotFiles, maxScreenshotQueueCount } from "./screenshot-file-queue";
 
 type ScreenshotImportResult = {
   preview: ImportPreview;
@@ -35,6 +37,8 @@ export function ImportWorkbench() {
   const [loading, setLoading] = useState(false);
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState<ScreenshotImportResult | null>(null);
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
+  const [activeDropzone, setActiveDropzone] = useState<"screenshot" | "excel" | null>(null);
   const importedMonths = preview ? getImportedRecordMonths(preview) : [];
   const primaryImportedMonth = importedMonths[0];
 
@@ -88,17 +92,21 @@ export function ImportWorkbench() {
     }
   }
 
-  async function importScreenshots(files: FileList | File[]) {
-    const selectedFiles = Array.from(files);
-    if (selectedFiles.length === 0) return;
+  function addScreenshotFiles(files: FileList | File[]) {
+    const result = appendScreenshotFiles(screenshotFiles, Array.from(files));
 
-    const invalidFile = selectedFiles.find(
-      (file) => !/^image\/(png|jpe?g|webp)$/i.test(file.type) || file.size > 10 * 1024 * 1024,
-    );
-    if (invalidFile) {
+    setScreenshotFiles(result.files);
+    if (result.invalidFiles.length > 0) {
       toast.error("仅支持 PNG / JPG / WebP，且单张不能超过 10MB");
-      return;
     }
+    if (result.rejectedCount > 0) {
+      toast.warning(`一次最多导入 ${maxScreenshotQueueCount} 张截图，已忽略 ${result.rejectedCount} 张`);
+    }
+  }
+
+  async function importScreenshots(files = screenshotFiles) {
+    const selectedFiles = files;
+    if (selectedFiles.length === 0) return;
 
     setScreenshotLoading(true);
     setScreenshotResult(null);
@@ -123,6 +131,7 @@ export function ImportWorkbench() {
     setPreview(result.data.preview);
     setPreviewSource("screenshot");
     setScreenshotResult(result.data);
+    setScreenshotFiles([]);
     if (result.data.batch.successRows > 0) {
       toast.success(`AI 已识别并导入 ${result.data.batch.successRows} 条记录`);
     } else {
@@ -138,7 +147,7 @@ export function ImportWorkbench() {
     }
 
     event.preventDefault();
-    void importScreenshots(files);
+    addScreenshotFiles(files);
   }
 
   return (
@@ -152,21 +161,37 @@ export function ImportWorkbench() {
             <div
               tabIndex={0}
               onPaste={pasteScreenshots}
-              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setActiveDropzone("screenshot");
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setActiveDropzone("screenshot");
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setActiveDropzone(null);
+                }
+              }}
               onDrop={(event) => {
                 event.preventDefault();
-                void importScreenshots(event.dataTransfer.files);
+                setActiveDropzone(null);
+                addScreenshotFiles(event.dataTransfer.files);
               }}
-              className="flex min-h-56 w-full flex-col items-center justify-center rounded-lg border border-dashed border-fuchsia-200/30 bg-fuchsia-200/5 p-8 text-center transition hover:bg-fuchsia-200/10 focus:outline-none focus:ring-2 focus:ring-fuchsia-200/45"
+              className={getImportDropzoneClassName("screenshot", activeDropzone === "screenshot")}
             >
               {screenshotLoading ? (
                 <Loader2 className="h-10 w-10 animate-spin text-fuchsia-100" />
               ) : (
-                <ImageUp className="h-10 w-10 text-fuchsia-100" />
+                <ImageUp className={getImportDropzoneIconClassName(activeDropzone === "screenshot")} />
               )}
               <span className="mt-5 text-lg font-semibold text-white">上传打卡截图，AI 自动识别并写入</span>
-              <span className="mt-2 text-sm text-slate-400">支持点击上传、拖拽或粘贴 PNG / JPG / WebP，可多选</span>
-              <span className="mt-1 text-xs text-slate-500">选中此区域后按 Ctrl+V，可直接导入剪贴板截图</span>
+              <span className="mt-2 text-sm text-slate-400">
+                支持点击上传、拖拽或粘贴 PNG / JPG / WebP，最多 {maxScreenshotQueueCount} 张
+              </span>
+              <span className="mt-1 text-xs text-slate-500">选中此区域后按 Ctrl+V，可把剪贴板截图加入待导入队列</span>
               <Button className="mt-5" type="button" variant="secondary" onClick={() => imageInputRef.current?.click()}>
                 <ImageUp className="h-4 w-4" /> 选择截图
               </Button>
@@ -179,10 +204,44 @@ export function ImportWorkbench() {
               hidden
               onChange={(event) => {
                 const files = event.target.files;
-                if (files) void importScreenshots(files);
+                if (files) addScreenshotFiles(files);
                 event.currentTarget.value = "";
               }}
             />
+            {screenshotFiles.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-slate-300">待导入截图 {screenshotFiles.length} / {maxScreenshotQueueCount}</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setScreenshotFiles([])}>
+                    清空
+                  </Button>
+                </div>
+                <div className="max-h-44 space-y-2 overflow-auto">
+                  {screenshotFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${file.lastModified}-${index}`}
+                      className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm"
+                    >
+                      <FileImage className="h-4 w-4 shrink-0 text-fuchsia-100" />
+                      <span className="min-w-0 flex-1 truncate text-slate-200">{file.name}</span>
+                      <span className="shrink-0 text-xs text-slate-500">{formatFileSize(file.size)}</span>
+                      <button
+                        type="button"
+                        aria-label={`移除 ${file.name}`}
+                        className="rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-white"
+                        onClick={() => setScreenshotFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <Button className="w-full" type="button" disabled={screenshotLoading} onClick={() => void importScreenshots()}>
+                  {screenshotLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  开始 AI 识别并导入
+                </Button>
+              </div>
+            ) : null}
             {screenshotResult ? (
               <div className="mt-4 grid gap-2 text-sm sm:grid-cols-4">
                 <div className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
@@ -227,15 +286,29 @@ export function ImportWorkbench() {
           <CardContent>
             <button
               onClick={() => inputRef.current?.click()}
-              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setActiveDropzone("excel");
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setActiveDropzone("excel");
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setActiveDropzone(null);
+                }
+              }}
               onDrop={(event) => {
                 event.preventDefault();
+                setActiveDropzone(null);
                 const file = event.dataTransfer.files[0];
                 if (file) void previewFile(file);
               }}
-              className="flex min-h-56 w-full flex-col items-center justify-center rounded-lg border border-dashed border-cyan-200/30 bg-cyan-200/5 p-8 text-center transition hover:bg-cyan-200/10"
+              className={getImportDropzoneClassName("excel", activeDropzone === "excel")}
             >
-              <UploadCloud className="h-10 w-10 text-cyan-100" />
+              <UploadCloud className={getImportDropzoneIconClassName(activeDropzone === "excel")} />
               <span className="mt-5 text-lg font-semibold text-white">拖拽或点击上传考勤 Excel</span>
               <span className="mt-2 text-sm text-slate-400">支持 .xlsx / .xls，可先下载模板填写，导入后自动识别并预填预览</span>
             </button>
@@ -322,4 +395,11 @@ function getPreviewRowCheckText(row: PreviewRow) {
   if (row.errors.length) return row.errors.join("；");
   if (row.record?.issues.length) return row.record.issues.join("；");
   return "通过";
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024 * 1024) {
+    return `${Math.max(1, Math.round(size / 1024))}KB`;
+  }
+  return `${(size / 1024 / 1024).toFixed(1)}MB`;
 }

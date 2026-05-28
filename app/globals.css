@@ -285,6 +285,139 @@ body {
   animation-delay: 1.1s;
 }
 
+.import-dropzone {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 240ms ease,
+    transform 240ms ease;
+}
+
+.import-dropzone::before,
+.import-dropzone::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.import-dropzone > * {
+  position: relative;
+  z-index: 1;
+}
+
+.import-dropzone--active {
+  transform: translateY(-2px) scale(1.006);
+}
+
+.import-dropzone--screenshot {
+  color: #fae8ff;
+}
+
+.import-dropzone--screenshot.import-dropzone--active {
+  border-color: rgb(240 171 252 / 78%);
+  background-color: rgb(217 70 239 / 9%);
+  box-shadow:
+    0 0 0 1px rgb(240 171 252 / 18%),
+    0 18px 70px rgb(112 26 117 / 22%),
+    inset 0 0 54px rgb(240 171 252 / 8%);
+}
+
+.import-dropzone--screenshot::before {
+  background:
+    linear-gradient(90deg, transparent 0%, rgb(240 171 252 / 0.36) 48%, transparent 100%),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgb(240 171 252 / 0.08) 18px 19px);
+  transform: translateX(-115%) skewX(-14deg);
+}
+
+.import-dropzone--screenshot::after {
+  border: 1px solid rgb(240 171 252 / 34%);
+  background:
+    linear-gradient(90deg, rgb(240 171 252 / 0.16), transparent 18%, transparent 82%, rgb(240 171 252 / 0.16)),
+    linear-gradient(0deg, rgb(240 171 252 / 0.12), transparent 22%, transparent 78%, rgb(240 171 252 / 0.12));
+  box-shadow: inset 0 0 42px rgb(240 171 252 / 12%);
+}
+
+.import-dropzone--screenshot.import-dropzone--active::before {
+  opacity: 1;
+  animation: import-screenshot-scan 1.05s ease-in-out infinite;
+}
+
+.import-dropzone--screenshot.import-dropzone--active::after {
+  opacity: 1;
+  animation: import-screenshot-frame 1.2s ease-in-out infinite;
+}
+
+.import-dropzone--excel {
+  color: #cffafe;
+}
+
+.import-dropzone--excel.import-dropzone--active {
+  border-color: rgb(103 232 249 / 72%);
+  background-color: rgb(8 145 178 / 9%);
+  box-shadow:
+    0 0 0 1px rgb(103 232 249 / 16%),
+    0 18px 70px rgb(8 47 73 / 26%),
+    inset 0 0 54px rgb(103 232 249 / 8%);
+}
+
+.import-dropzone--excel::before {
+  background-image:
+    linear-gradient(rgb(103 232 249 / 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(103 232 249 / 0.08) 1px, transparent 1px);
+  background-size: 28px 20px;
+  transform: translateY(-18px);
+}
+
+.import-dropzone--excel::after {
+  height: 42%;
+  background: linear-gradient(180deg, transparent, rgb(103 232 249 / 0.2), transparent);
+  transform: translateY(-120%);
+}
+
+.import-dropzone--excel.import-dropzone--active::before {
+  opacity: 1;
+  animation: import-excel-grid 1.4s linear infinite;
+}
+
+.import-dropzone--excel.import-dropzone--active::after {
+  opacity: 1;
+  animation: import-excel-sweep 1.05s ease-in-out infinite;
+}
+
+.import-dropzone__icon {
+  color: currentColor;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    transform 220ms ease;
+}
+
+.import-dropzone--screenshot .import-dropzone__icon {
+  color: #fae8ff;
+}
+
+.import-dropzone--excel .import-dropzone__icon {
+  color: #cffafe;
+}
+
+.import-dropzone--screenshot .import-dropzone__icon--active {
+  filter: drop-shadow(0 0 16px rgb(240 171 252 / 62%));
+  animation: import-screenshot-icon 720ms ease-in-out infinite alternate;
+}
+
+.import-dropzone--excel .import-dropzone__icon--active {
+  filter: drop-shadow(0 0 16px rgb(103 232 249 / 58%));
+  animation: import-excel-icon 620ms cubic-bezier(0.2, 0.8, 0.2, 1) infinite alternate;
+}
+
 @keyframes ai-thinking-spin {
   to {
     transform: rotate(360deg);
@@ -407,6 +540,69 @@ body {
   }
 }
 
+@keyframes import-screenshot-scan {
+  0% {
+    transform: translateX(-115%) skewX(-14deg);
+  }
+
+  100% {
+    transform: translateX(115%) skewX(-14deg);
+  }
+}
+
+@keyframes import-screenshot-frame {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes import-screenshot-icon {
+  from {
+    transform: translateY(0) rotate(-2deg) scale(1);
+  }
+
+  to {
+    transform: translateY(-7px) rotate(3deg) scale(1.08);
+  }
+}
+
+@keyframes import-excel-grid {
+  from {
+    background-position: 0 0, 0 0;
+  }
+
+  to {
+    background-position: 0 20px, 28px 0;
+  }
+}
+
+@keyframes import-excel-sweep {
+  0% {
+    transform: translateY(-120%);
+  }
+
+  100% {
+    transform: translateY(260%);
+  }
+}
+
+@keyframes import-excel-icon {
+  from {
+    transform: translateY(-3px) scaleX(1);
+  }
+
+  to {
+    transform: translateY(5px) scaleX(1.08) scaleY(0.94);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-grid,
   .auth-scanline,
@@ -421,7 +617,20 @@ body {
     transition: none;
   }
 
+  .import-dropzone,
+  .import-dropzone::before,
+  .import-dropzone::after,
+  .import-dropzone__icon,
+  .import-dropzone__icon--active {
+    animation: none;
+    transition: none;
+  }
+
   .auth-card-3d:hover {
+    transform: none;
+  }
+
+  .import-dropzone--active {
     transform: none;
   }
 }

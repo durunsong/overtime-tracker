@@ -3,11 +3,8 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { isAiConfigured } from "@/lib/ai/client";
 import { parseAttendanceScreenshots, type ScreenshotImportFile } from "@/lib/ai/screenshot-import";
 import { getDefaultUserId } from "@/lib/data/attendance-repository";
+import { getScreenshotImportFileValidationError } from "@/lib/import/screenshot-files";
 import { jsonResponse } from "@/lib/utils";
-
-const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
-const maxFileSize = 10 * 1024 * 1024;
-const maxTotalSize = 30 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -27,24 +24,10 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const files = formData.getAll("files").filter((file): file is File => file instanceof File);
-
-    if (files.length === 0) {
-      return jsonResponse({ success: false, error: "请上传至少一张打卡截图" }, { status: 400 });
-    }
-
+    const validationError = getScreenshotImportFileValidationError(files);
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    if (totalSize > maxTotalSize) {
-      return jsonResponse({ success: false, error: "截图总大小不能超过 30MB" }, { status: 400 });
-    }
-
-    const invalidFile = files.find(
-      (file) => !allowedImageTypes.has(file.type) || file.size > maxFileSize,
-    );
-    if (invalidFile) {
-      return jsonResponse(
-        { success: false, error: "仅支持 PNG / JPG / WebP，且单张不能超过 10MB" },
-        { status: 400 },
-      );
+    if (validationError) {
+      return jsonResponse({ success: false, error: validationError }, { status: 400 });
     }
 
     const imageFiles: ScreenshotImportFile[] = await Promise.all(
