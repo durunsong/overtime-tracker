@@ -183,5 +183,9 @@ function groupByDay(records: AttendanceRecordView[]): TrendPoint[] {
     workMinutes: record.actualWorkMinutes,
     overtimeMinutes: record.overtimeMinutes,
     abnormalCount: ["ABSENT", "ABNORMAL"].includes(record.status) ? 1 : 0,
+    punchTimeRange:
+      record.checkInTime && record.checkOutTime
+        ? `${format(record.checkInTime, "HH:mm")}-${format(record.checkOutTime, "HH:mm")}`
+        : undefined,
   }));
 }

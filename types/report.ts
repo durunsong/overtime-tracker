@@ -5,6 +5,7 @@ export type TrendPoint = {
   workMinutes: number;
   overtimeMinutes: number;
   abnormalCount: number;
+  punchTimeRange?: string;
 };
 
 export type MonthlyReportView = {

@@ -98,8 +98,8 @@ describe("attendance calculation", () => {
     const records = [
       buildAttendanceRecord("case-1", {
         workDate: new Date("2026-05-04T00:00:00"),
-        checkInTime: parseTime("09:20", new Date("2026-05-04T00:00:00")),
-        checkOutTime: parseTime("20:00", new Date("2026-05-04T00:00:00")),
+        checkInTime: parseTime("09:15", new Date("2026-05-04T00:00:00")),
+        checkOutTime: parseTime("19:07", new Date("2026-05-04T00:00:00")),
       }),
       buildAttendanceRecord("case-2", {
         workDate: new Date("2026-05-05T00:00:00"),
@@ -116,6 +116,7 @@ describe("attendance calculation", () => {
     expect(report.workDays).toBeGreaterThan(0);
     expect(report.overtimeMinutes).toBeGreaterThan(0);
     expect(report.dayTrend.length).toBe(3);
+    expect(report.dayTrend[0].punchTimeRange).toBe("09:15-19:07");
     expect(report.abnormalCount).toBe(1);
   });
 

@@ -23,7 +23,7 @@ const navItems = [
   { href: "/dashboard", label: "统计看板", icon: Gauge },
   { href: "/dashboard/calendar", label: "月历排班", icon: CalendarDays },
   { href: "/dashboard/records", label: "打卡记录", icon: Table2 },
-  { href: "/dashboard/import", label: "Excel 导入", icon: FileSpreadsheet },
+  { href: "/dashboard/import", label: "AI 导入中心", icon: FileSpreadsheet },
   { href: "/dashboard/reports", label: "月报", icon: CalendarClock },
   { href: "/dashboard/rules", label: "规则", icon: Settings2 },
   { href: "/dashboard/ai", label: "AI 分析", icon: Bot },
