@@ -3,6 +3,11 @@ import { buildAttendanceRecord, calculateDailyAttendance, calculateMonthlyReport
 import { formatMinutes, minutesToDecimalHours } from "./formatter";
 import { parseExcelDate, parseTime, toDateKey } from "./parser";
 import { buildCalendarMonth, getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
+import {
+  chinaHolidayRuleSources,
+  getChinaHolidayDefinition,
+  getSupportedChinaHolidayYears,
+} from "@/lib/calendar/china-holiday-rules";
 import { defaultWorkRule } from "@/types/attendance";
 
 describe("attendance calculation", () => {
@@ -76,6 +81,45 @@ describe("attendance calculation", () => {
     expect(result.overtimeMinutes).toBe(120);
   });
 
+  it("treats an adjusted workday on Saturday as a normal workday", () => {
+    const workDate = new Date("2026-05-09T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("09:18", workDate),
+        checkOutTime: parseTime("19:14", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        weekendEnabled: true,
+      },
+    );
+
+    expect(getChinaCalendarMeta(workDate).kind).toBe("ADJUSTED_WORKDAY");
+    expect(result.actualWorkMinutes).toBe(584);
+    expect(result.overtimeMinutes).toBe(14);
+    expect(result.status).toBe("NORMAL");
+  });
+
+  it("counts enabled China holidays with the non-workday overtime rule", () => {
+    const workDate = new Date("2026-10-01T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("09:15", workDate),
+        checkOutTime: parseTime("19:30", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        holidayEnabled: true,
+      },
+    );
+
+    expect(getChinaCalendarMeta(workDate).kind).toBe("HOLIDAY");
+    expect(result.actualWorkMinutes).toBe(480);
+    expect(result.overtimeMinutes).toBe(480);
+  });
+
   it("marks missing punches and reversed time as abnormal", () => {
     const workDate = new Date("2026-05-05T00:00:00");
     expect(
@@ -133,8 +177,17 @@ describe("attendance calculation", () => {
 
   it("marks China holidays on the monthly calendar", () => {
     expect(getChinaCalendarMeta(new Date("2026-10-01T00:00:00")).kind).toBe("HOLIDAY");
+    expect(getChinaCalendarMeta(new Date("2026-05-09T00:00:00")).kind).toBe("ADJUSTED_WORKDAY");
     const month = buildCalendarMonth("2026-10", []);
     expect(month.days.some((day) => day.date === "2026-10-01" && day.name === "国庆节")).toBe(true);
+  });
+
+  it("keeps China holiday rules traceable by year and source", () => {
+    expect(getSupportedChinaHolidayYears()).toContain(2026);
+    expect(chinaHolidayRuleSources[2026]?.officialNoticeUrl).toContain("gov.cn");
+    expect(chinaHolidayRuleSources[2026]?.providerApiUrl).toContain("timor.tech");
+    expect(getChinaHolidayDefinition("2026-05-09")?.kind).toBe("ADJUSTED_WORKDAY");
+    expect(getChinaHolidayDefinition("2027-05-09")).toBeNull();
   });
 
   it("summarizes monthly overtime on the calendar from current-month records", () => {

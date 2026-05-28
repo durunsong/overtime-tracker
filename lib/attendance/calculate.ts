@@ -1,4 +1,4 @@
-import { differenceInMinutes, format, getISOWeek, isWeekend } from "date-fns";
+import { differenceInMinutes, format, getISOWeek } from "date-fns";
 import type {
   AttendanceCalculation,
   AttendanceInput,
@@ -7,6 +7,7 @@ import type {
 } from "@/types/attendance";
 import type { MonthlyReportView, TrendPoint } from "@/types/report";
 import { defaultWorkRule } from "@/types/attendance";
+import { getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
 import { toDateKey, toTimeOnDate } from "./parser";
 
 export function calculateDailyAttendance(
@@ -69,12 +70,15 @@ export function calculateDailyAttendance(
     0,
     differenceInMinutes(end, input.checkOutTime),
   );
-  const isCountedWeekend = rule.weekendEnabled && isWeekend(input.workDate);
-  const weekendWorkLimit = Math.max(0, standardWorkMinutes - lateMinutes);
-  const actualWorkMinutes = isCountedWeekend
-    ? Math.min(rawActualWorkMinutes, weekendWorkLimit)
+  const dayMeta = getChinaCalendarMeta(input.workDate);
+  const isCountedNonWorkday =
+    (dayMeta.kind === "WEEKEND" && rule.weekendEnabled) ||
+    (dayMeta.kind === "HOLIDAY" && rule.holidayEnabled);
+  const nonWorkdayWorkLimit = Math.max(0, standardWorkMinutes - lateMinutes);
+  const actualWorkMinutes = isCountedNonWorkday
+    ? Math.min(rawActualWorkMinutes, nonWorkdayWorkLimit)
     : rawActualWorkMinutes;
-  const overtimeMinutes = isCountedWeekend
+  const overtimeMinutes = isCountedNonWorkday
     ? actualWorkMinutes
     : Math.max(0, differenceInMinutes(input.checkOutTime, overtimeStart));
 

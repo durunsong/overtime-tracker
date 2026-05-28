@@ -200,7 +200,17 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
           {selectedDay ? (
             <>
               <div className="flex flex-wrap gap-2">
-                <Badge tone={selectedDay.kind === "HOLIDAY" ? "rose" : selectedDay.kind === "WEEKEND" ? "amber" : "cyan"}>
+                <Badge
+                  tone={
+                    selectedDay.kind === "HOLIDAY"
+                      ? "rose"
+                      : selectedDay.kind === "WEEKEND"
+                        ? "amber"
+                        : selectedDay.kind === "ADJUSTED_WORKDAY"
+                          ? "emerald"
+                          : "cyan"
+                  }
+                >
                   {kindLabel[selectedDay.kind]}
                 </Badge>
                 {selectedDay.name ? <Badge tone="slate">{selectedDay.name}</Badge> : null}
