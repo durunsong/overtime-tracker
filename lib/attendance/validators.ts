@@ -89,7 +89,9 @@ export function validateAttendanceRow(
     rule,
   );
 
-  errors.push(...calculation.issues);
+  if (calculation.status === "ABSENT" || calculation.status === "ABNORMAL") {
+    errors.push(...calculation.issues);
+  }
 
   return {
     record: {

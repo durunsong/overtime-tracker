@@ -24,6 +24,8 @@ type ScreenshotImportResult = {
   };
 };
 
+type PreviewRow = ImportPreview["rows"][number];
+
 export function ImportWorkbench() {
   const inputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -302,7 +304,7 @@ export function ImportWorkbench() {
                         <td className="px-3 py-2">{row.record?.rawCheckInText ?? "-"}</td>
                         <td className="px-3 py-2">{row.record?.rawCheckOutText ?? "-"}</td>
                         <td className="px-3 py-2">{formatMinutes(row.record?.overtimeMinutes ?? 0)}</td>
-                        <td className="px-3 py-2">{row.errors.length ? row.errors.join("；") : "通过"}</td>
+                        <td className="px-3 py-2">{getPreviewRowCheckText(row)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -314,4 +316,10 @@ export function ImportWorkbench() {
       </Card>
     </div>
   );
+}
+
+function getPreviewRowCheckText(row: PreviewRow) {
+  if (row.errors.length) return row.errors.join("；");
+  if (row.record?.issues.length) return row.record.issues.join("；");
+  return "通过";
 }

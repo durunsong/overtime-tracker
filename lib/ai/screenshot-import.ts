@@ -23,6 +23,8 @@ const aiResultSchema = z.object({
   records: z.array(aiRecordSchema),
 });
 
+type AiRecord = z.infer<typeof aiRecordSchema>;
+
 export async function parseAttendanceScreenshots(
   files: ScreenshotImportFile[],
 ): Promise<ImportPreview> {
@@ -45,7 +47,12 @@ export async function parseAttendanceScreenshots(
   });
 
   const parsed = aiResultSchema.parse(parseJsonObject(result.text));
-  const previewRows = parsed.records.map((row, index) => {
+  return buildScreenshotImportPreview(parsed.records);
+}
+
+export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview {
+  const rows = records.filter((row) => !isHeaderLikeRecord(row));
+  const previewRows = rows.map((row, index) => {
     const validation = validateAttendanceRow({
       name: row.name ?? undefined,
       date: row.date,
@@ -82,6 +89,28 @@ export async function parseAttendanceScreenshots(
     validRows: previewRows.filter((row) => row.errors.length === 0).length,
     invalidRows: previewRows.filter((row) => row.errors.length > 0).length,
   };
+}
+
+function isHeaderLikeRecord(row: AiRecord) {
+  const values = [
+    [row.date, ["date", "日期", "打卡日期", "考勤日期"]],
+    [row.name, ["name", "姓名", "员工姓名"]],
+    [row.checkIn, ["checkin", "check in", "上班", "上班时间", "签到时间"]],
+    [row.checkOut, ["checkout", "check out", "下班", "下班时间", "签退时间"]],
+    [row.remark, ["remark", "备注", "说明"]],
+  ] as const;
+
+  const hitCount = values.filter(([value, aliases]) => {
+    const normalized = normalizeHeaderText(value);
+    return normalized ? aliases.some((alias) => normalizeHeaderText(alias) === normalized) : false;
+  }).length;
+
+  return hitCount >= 2;
+}
+
+function normalizeHeaderText(value: unknown) {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase().replace(/[\s_\-：:]/g, "");
 }
 
 function parseJsonObject(text: string) {

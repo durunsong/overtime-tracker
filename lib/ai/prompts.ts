@@ -72,6 +72,7 @@ ${fileNames.map((fileName, index) => `${index + 1}. ${fileName}`).join("\n")}
 
 规则：
 - 同一天可能有多次打卡时，checkIn 取最早打卡时间，checkOut 取最晚打卡时间。
+- 不要把表头或字段名（如 date、name、checkIn、checkOut、remark、日期、姓名、上班、下班）输出为 records。
 - 如果截图只有日期但缺少上班或下班时间，对应字段返回 null，不要猜测。
 - 如果日期含中文、斜杠或点号，请统一转为 yyyy-MM-dd。
 - 如果无法识别任何有效日期，records 返回空数组。
