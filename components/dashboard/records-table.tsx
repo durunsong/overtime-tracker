@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Download, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import type { AttendanceRecordView, AttendanceStatus } from "@/types/attendance";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
+import { DEFAULT_RECORD_FILTERS, resetRecordFilters } from "./records-filter";
 
 const statusLabel: Record<AttendanceStatus, string> = {
   NORMAL: "正常",
@@ -29,9 +30,9 @@ const statusOptions = [
 
 export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRecordView[] }) {
   const [records, setRecords] = useState(initialRecords);
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState("ALL");
-  const [month, setMonth] = useState("2026-05");
+  const [keyword, setKeyword] = useState(DEFAULT_RECORD_FILTERS.keyword);
+  const [status, setStatus] = useState(DEFAULT_RECORD_FILTERS.status);
+  const [month, setMonth] = useState(DEFAULT_RECORD_FILTERS.month);
 
   const filtered = useMemo(
     () =>
@@ -57,6 +58,13 @@ export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRec
       .catch((error) => {
         toast.error(error instanceof Error ? error.message : "删除失败");
       });
+  }
+
+  function resetFilters() {
+    const nextFilters = resetRecordFilters();
+    setKeyword(nextFilters.keyword);
+    setMonth(nextFilters.month);
+    setStatus(nextFilters.status);
   }
 
   function exportCsv() {
@@ -105,6 +113,9 @@ export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRec
             aria-label="选择打卡状态"
           />
           <Input placeholder="搜索备注" value={keyword} onChange={(event) => setKeyword(event.target.value)} className="w-40" />
+          <Button variant="secondary" onClick={resetFilters}>
+            <RotateCcw className="h-4 w-4" /> 重置
+          </Button>
           <Button variant="secondary" onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4" /> 重新计算
           </Button>
