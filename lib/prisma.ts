@@ -9,6 +9,23 @@ type PrismaGlobal = typeof globalThis & {
 
 const globalForPrisma = globalThis as PrismaGlobal;
 
+export function normalizeDatabaseUrlForPg(connectionString: string) {
+  try {
+    const url = new URL(connectionString);
+    const sslMode = url.searchParams.get("sslmode")?.toLowerCase();
+    const useLibpqCompat = url.searchParams.get("uselibpqcompat")?.toLowerCase() === "true";
+
+    if (!useLibpqCompat && (sslMode === "prefer" || sslMode === "require" || sslMode === "verify-ca")) {
+      url.searchParams.set("sslmode", "verify-full");
+      return url.toString();
+    }
+  } catch {
+    return connectionString;
+  }
+
+  return connectionString;
+}
+
 export function isDatabaseConfigured() {
   return Boolean(process.env.DATABASE_URL);
 }
@@ -20,7 +37,7 @@ export function getPrisma() {
 
   if (!globalForPrisma.__overtimePgPool) {
     globalForPrisma.__overtimePgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: normalizeDatabaseUrlForPg(process.env.DATABASE_URL),
     });
   }
 

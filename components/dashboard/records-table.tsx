@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MonthPicker } from "@/components/ui/month-picker";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import type { AttendanceRecordView, AttendanceStatus } from "@/types/attendance";
 import { formatMinutes } from "@/lib/attendance/formatter";
@@ -21,6 +22,10 @@ const statusLabel: Record<AttendanceStatus, string> = {
   HOLIDAY: "节假日",
   ABNORMAL: "异常",
 };
+const statusOptions = [
+  { value: "ALL", label: "全部状态" },
+  ...Object.entries(statusLabel).map(([value, label]) => ({ value, label })),
+];
 
 export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRecordView[] }) {
   const [records, setRecords] = useState(initialRecords);
@@ -92,18 +97,13 @@ export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRec
             allowClear
             aria-label="选择记录月份"
           />
-          <select
+          <Select
             value={status}
-            onChange={(event) => setStatus(event.target.value)}
-            className="h-10 rounded-md border border-white/12 bg-slate-950/60 px-3 text-sm text-white"
-          >
-            <option value="ALL">全部状态</option>
-            {Object.entries(statusLabel).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+            onChange={setStatus}
+            options={statusOptions}
+            className="w-32"
+            aria-label="选择打卡状态"
+          />
           <Input placeholder="搜索备注" value={keyword} onChange={(event) => setKeyword(event.target.value)} className="w-40" />
           <Button variant="secondary" onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4" /> 重新计算

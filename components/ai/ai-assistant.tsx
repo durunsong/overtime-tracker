@@ -102,7 +102,7 @@ export function AiAssistant() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="h-[584px] overflow-y-auto rounded-lg border border-white/10 bg-slate-950/50 p-5 text-sm leading-7 text-slate-300">
+          <div className="scrollbar-hidden h-[584px] overflow-y-auto rounded-lg border border-white/10 bg-slate-950/50 p-5 text-sm leading-7 text-slate-300">
             {answer ? (
               <MarkdownAnswer content={answer} />
             ) : (

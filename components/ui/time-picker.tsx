@@ -58,7 +58,7 @@ export function TimePicker({
   }
 
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
+    <div ref={rootRef} className={cn("relative", open ? "z-[120]" : "z-0", className)}>
       <button
         type="button"
         aria-label={ariaLabel}
@@ -73,7 +73,7 @@ export function TimePicker({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-56 rounded-lg border border-cyan-200/20 bg-slate-950/96 p-3 text-white shadow-[0_22px_70px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.04)] backdrop-blur-xl">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[130] w-56 rounded-lg border border-cyan-200/20 bg-slate-950/96 p-3 text-white shadow-[0_22px_70px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.04)] backdrop-blur-xl">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold text-white">选择时间</div>

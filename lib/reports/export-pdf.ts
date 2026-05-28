@@ -42,8 +42,6 @@ export function buildPrintableReportHtml(report: MonthlyReportView) {
         <div class="card"><div class="label">平均加班</div><div class="value">${formatMinutes(report.averageOvertimeMinutes)}</div></div>
         <div class="card"><div class="label">异常次数</div><div class="value">${report.abnormalCount} 次</div></div>
       </div>
-      <h2>AI 总结</h2>
-      <p>${report.aiSummary ?? "暂无 AI 总结。"}</p>
       <h2>每日明细</h2>
       <table>
         <thead><tr><th>日期</th><th>上班</th><th>下班</th><th>加班</th><th>状态</th><th>备注</th></tr></thead>

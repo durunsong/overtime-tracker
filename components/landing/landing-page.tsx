@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef } from "react";
-import { ArrowRight, BarChart3, Bot, Clock3, FileSpreadsheet } from "lucide-react";
+import { ArrowRight, BarChart3, Bot, Clock3, FileSpreadsheet, LayoutDashboard } from "lucide-react";
+import type { AuthUser } from "@/lib/auth/session";
 
 const VIDEO_SOURCE =
   "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4";
@@ -21,6 +22,7 @@ export const LANDING_COPY = {
   auth: {
     register: "创建账号",
     login: "登录",
+    workspace: "进入工作台",
   },
   heroTitle: "加班统计，从打卡表开始",
   emailPlaceholder: "输入邮箱，接收月报提醒",
@@ -29,6 +31,7 @@ export const LANDING_COPY = {
   heroDescription:
     "导入 Excel 打卡数据，自动识别上下班时间、计算每日加班、标记异常记录，并生成可追溯的月度统计和 AI 总结。",
   primaryAction: "进入统计看板",
+  signedInPrimaryAction: "继续查看本月统计",
   footerLinks: [
     { label: "导入打卡数据", href: "/dashboard/import" },
     { label: "查看加班趋势", href: "/dashboard" },
@@ -36,7 +39,38 @@ export const LANDING_COPY = {
   ],
 };
 
-export function LandingPage() {
+export function getLandingSessionCopy(user: AuthUser | null) {
+  if (!user) {
+    return {
+      isAuthenticated: false,
+      navActionLabel: LANDING_COPY.auth.login,
+      navActionHref: "/auth/login",
+      secondaryActionLabel: LANDING_COPY.auth.register,
+      secondaryActionHref: "/auth/register",
+      heroActionLabel: LANDING_COPY.primaryAction,
+      heroActionHref: "/dashboard",
+      helperText: LANDING_COPY.heroDescription,
+      showEmailForm: true,
+      userLabel: null,
+    };
+  }
+
+  return {
+    isAuthenticated: true,
+    navActionLabel: LANDING_COPY.auth.workspace,
+    navActionHref: "/dashboard",
+    secondaryActionLabel: "账号安全",
+    secondaryActionHref: "/dashboard/account",
+    heroActionLabel: LANDING_COPY.signedInPrimaryAction,
+    heroActionHref: "/dashboard",
+    helperText: `欢迎回来，${user.name}。继续查看本月加班趋势、异常记录和可导出的 AI 月报。`,
+    showEmailForm: false,
+    userLabel: user.name || user.email,
+  };
+}
+
+export function LandingPage({ user = null }: { user?: AuthUser | null }) {
+  const sessionCopy = getLandingSessionCopy(user);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
   const opacityRef = useRef(0);
@@ -183,14 +217,19 @@ export function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/auth/register" className="text-sm font-medium text-white">
-              {LANDING_COPY.auth.register}
+            {sessionCopy.userLabel ? (
+              <span className="hidden max-w-32 truncate text-sm font-medium text-white/75 sm:inline">
+                {sessionCopy.userLabel}
+              </span>
+            ) : null}
+            <Link href={sessionCopy.secondaryActionHref} className="text-sm font-medium text-white">
+              {sessionCopy.secondaryActionLabel}
             </Link>
             <Link
-              href="/auth/login"
+              href={sessionCopy.navActionHref}
               className="liquid-glass rounded-full px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-white/5"
             >
-              {LANDING_COPY.auth.login}
+              {sessionCopy.navActionLabel}
             </Link>
           </div>
         </div>
@@ -205,35 +244,53 @@ export function LandingPage() {
         </h1>
 
         <div className="w-full max-w-xl space-y-4">
-          <form
-            className="liquid-glass flex items-center gap-3 rounded-full py-2 pl-6 pr-2"
-            onSubmit={handleSubmit}
-          >
-            <input
-              type="email"
-              aria-label={LANDING_COPY.emailAriaLabel}
-              placeholder={LANDING_COPY.emailPlaceholder}
-              className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/40"
-            />
-            <button
-              type="submit"
-              aria-label={LANDING_COPY.submitAriaLabel}
-              className="rounded-full bg-white p-3 text-black transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
+          {sessionCopy.showEmailForm ? (
+            <form
+              className="liquid-glass flex items-center gap-3 rounded-full py-2 pl-6 pr-2"
+              onSubmit={handleSubmit}
             >
-              <ArrowRight size={20} aria-hidden="true" />
-            </button>
-          </form>
+              <input
+                type="email"
+                aria-label={LANDING_COPY.emailAriaLabel}
+                placeholder={LANDING_COPY.emailPlaceholder}
+                className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/40"
+              />
+              <button
+                type="submit"
+                aria-label={LANDING_COPY.submitAriaLabel}
+                className="rounded-full bg-white p-3 text-black transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
+              >
+                <ArrowRight size={20} aria-hidden="true" />
+              </button>
+            </form>
+          ) : (
+            <div className="liquid-glass mx-auto flex max-w-md items-center justify-between gap-4 rounded-full py-2 pl-5 pr-2 text-left">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">
+                  {sessionCopy.userLabel}
+                </p>
+                <p className="truncate text-xs text-white/50">已登录，工作台数据可继续追踪</p>
+              </div>
+              <Link
+                href="/dashboard"
+                aria-label="进入工作台"
+                className="rounded-full bg-white p-3 text-black transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
+              >
+                <LayoutDashboard size={20} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
 
           <p className="px-4 text-sm leading-relaxed text-white">
-            {LANDING_COPY.heroDescription}
+            {sessionCopy.helperText}
           </p>
 
           <div className="flex justify-center">
             <Link
-              href="/dashboard"
+              href={sessionCopy.heroActionHref}
               className="liquid-glass rounded-full px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-white/5"
             >
-              {LANDING_COPY.primaryAction}
+              {sessionCopy.heroActionLabel}
             </Link>
           </div>
         </div>

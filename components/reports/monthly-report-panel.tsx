@@ -86,7 +86,7 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="relative z-30">
         <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle>月报生成</CardTitle>
           <div className="flex flex-wrap gap-2">
@@ -131,7 +131,7 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="relative z-0 grid items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle>每日加班明细图</CardTitle>
@@ -158,7 +158,7 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="h-[424px] overflow-y-auto rounded-lg border border-white/10 bg-slate-950/50 p-5 text-sm leading-7 text-slate-300">
+            <div className="scrollbar-hidden h-[424px] overflow-y-auto rounded-lg border border-white/10 bg-slate-950/50 p-5 text-sm leading-7 text-slate-300">
               {aiSummary ? (
                 <MarkdownAnswer content={aiSummary} />
               ) : (
