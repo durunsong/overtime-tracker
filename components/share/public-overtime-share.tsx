@@ -17,13 +17,13 @@ export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePaylo
       <section className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-8 lg:px-10">
         <header className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-cyan-200/70">Public Overtime Share</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white">{share.ownerName} 的加班分享</h1>
+            <p className="text-xs tracking-[0.22em] text-cyan-200/70">加班统计报告</p>
+            <h1 className="mt-3 text-3xl font-semibold text-white">{share.ownerName} 的加班统计</h1>
             <p className="mt-2 text-sm text-slate-400">
-              {share.report.month} 月度快照，生成于 {share.createdAt.toLocaleString("zh-CN")}
+              {share.report.month} 月数据，生成时间：{share.createdAt.toLocaleString("zh-CN")}
             </p>
           </div>
-          <Badge tone="cyan">免登录可查看</Badge>
+          <Badge tone="cyan">已分享给你</Badge>
         </header>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -44,11 +44,11 @@ export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePaylo
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>分享说明</CardTitle>
+              <CardTitle>数据说明</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-7 text-slate-300">
-                这是一次固定快照分享。链接创建后，后续新增、编辑或删除打卡记录不会影响此页面展示的数据。
+                这份报告展示分享人在所选月份的加班汇总、趋势和明细排行。数据统计截至上方生成时间。
               </p>
             </CardContent>
           </Card>
