@@ -19,6 +19,7 @@ import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { passwordInputClassName, passwordToggleButtonClassName } from "@/components/auth/auth-input-styles";
 import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
 import { isPasswordPolicySatisfied, passwordPolicyDescription } from "@/lib/auth/password-policy";
 import { cn } from "@/lib/utils";
@@ -528,16 +529,16 @@ function PasswordInput({
 
   return (
     <div className="relative">
-      <Input
+      <input
         {...props}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         type={inputType}
-        className={cn("pr-11", className)}
+        className={passwordInputClassName(className)}
       />
       <button
         type="button"
-        className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded text-slate-500 transition hover:bg-white/8 hover:text-cyan-100"
+        className={passwordToggleButtonClassName()}
         onClick={() => setVisible((current) => !current)}
         aria-label={visible ? "隐藏密码" : "显示密码"}
       >
