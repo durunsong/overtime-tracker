@@ -2,6 +2,7 @@
 
 import type { ClipboardEvent } from "react";
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { Download, FileUp, ImageUp, Loader2, Sparkles, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ImportPreview } from "@/types/import";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
+import { getImportedRecordMonths } from "@/lib/import/import-summary";
 import { extractImageFilesFromClipboardItems } from "./clipboard-images";
 
 type ScreenshotImportResult = {
@@ -31,6 +33,8 @@ export function ImportWorkbench() {
   const [loading, setLoading] = useState(false);
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState<ScreenshotImportResult | null>(null);
+  const importedMonths = preview ? getImportedRecordMonths(preview) : [];
+  const primaryImportedMonth = importedMonths[0];
 
   async function previewFile(file: File) {
     if (!/\.(xlsx|xls)$/i.test(file.name)) {
@@ -117,7 +121,11 @@ export function ImportWorkbench() {
     setPreview(result.data.preview);
     setPreviewSource("screenshot");
     setScreenshotResult(result.data);
-    toast.success(`AI 已识别并导入 ${result.data.batch.successRows} 条记录`);
+    if (result.data.batch.successRows > 0) {
+      toast.success(`AI 已识别并导入 ${result.data.batch.successRows} 条记录`);
+    } else {
+      toast.warning("AI 已完成识别，但没有有效记录写入日历，请在右侧预览中复核异常原因");
+    }
   }
 
   function pasteScreenshots(event: ClipboardEvent<HTMLDivElement>) {
@@ -174,7 +182,7 @@ export function ImportWorkbench() {
               }}
             />
             {screenshotResult ? (
-              <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+              <div className="mt-4 grid gap-2 text-sm sm:grid-cols-4">
                 <div className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
                   <span className="text-slate-500">批次</span>
                   <span className="float-right text-slate-200">{screenshotResult.batch.status}</span>
@@ -187,6 +195,19 @@ export function ImportWorkbench() {
                   <span className="text-slate-500">需复核</span>
                   <span className="float-right text-rose-100">{screenshotResult.batch.failedRows}</span>
                 </div>
+                {primaryImportedMonth ? (
+                  <Link
+                    href={`/dashboard/calendar?month=${primaryImportedMonth}`}
+                    className="rounded-md border border-cyan-300/20 bg-cyan-300/8 px-3 py-2 text-cyan-100 transition hover:bg-cyan-300/14"
+                  >
+                    查看日历
+                    <span className="float-right">{primaryImportedMonth}</span>
+                  </Link>
+                ) : (
+                  <div className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-slate-500">
+                    未写入日历
+                  </div>
+                )}
               </div>
             ) : null}
           </CardContent>

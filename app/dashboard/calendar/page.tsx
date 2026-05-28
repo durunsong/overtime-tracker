@@ -6,8 +6,17 @@ import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
 
 export const dynamic = "force-dynamic";
 
-export default async function CalendarPage() {
-  const month = format(new Date(), "yyyy-MM");
+type CalendarPageProps = {
+  searchParams: Promise<{
+    month?: string;
+  }>;
+};
+
+export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+  const params = await searchParams;
+  const month = params.month && /^\d{4}-\d{2}$/.test(params.month)
+    ? params.month
+    : format(new Date(), "yyyy-MM");
   let calendar;
 
   try {
