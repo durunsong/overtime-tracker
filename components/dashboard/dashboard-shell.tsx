@@ -96,7 +96,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                     unoptimized
                     className="h-7 w-7 shrink-0 rounded-full border border-white/10 bg-slate-900"
                   />
-                  <div className="min-w-0 text-right">
+                  <div className="min-w-0 text-left">
                     <p className="text-sm font-medium text-white">{user.name}</p>
                     <p className="truncate text-xs text-slate-500">{user.email}</p>
                   </div>
