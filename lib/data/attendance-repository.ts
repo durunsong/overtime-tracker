@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { getPrisma } from "@/lib/prisma";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
+import { mergeRecordsByWorkDate, normalizeWorkDate } from "@/lib/attendance/records";
 import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
 import type {
   AttendanceRecordView,
@@ -49,22 +50,23 @@ export async function loadAttendanceRecords(month?: string) {
     where: { userId },
     orderBy: { workDate: "asc" },
   });
-  const views = records.map(recordToView);
+  const views = mergeRecordsByWorkDate(records.map(recordToView));
   return month ? views.filter((record) => format(record.workDate, "yyyy-MM") === month) : views;
 }
 
 export async function createAttendanceRecord(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
-  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
+  const normalizedInput = normalizeAttendanceInput(input);
+  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.create({
     data: {
       userId,
-      workDate: input.workDate,
-      checkInTime: input.checkInTime,
-      checkOutTime: input.checkOutTime,
-      rawCheckInText: input.rawCheckInText,
-      rawCheckOutText: input.rawCheckOutText,
+      workDate: normalizedInput.workDate,
+      checkInTime: normalizedInput.checkInTime,
+      checkOutTime: normalizedInput.checkOutTime,
+      rawCheckInText: normalizedInput.rawCheckInText,
+      rawCheckOutText: normalizedInput.rawCheckOutText,
       actualWorkMinutes: calculation.actualWorkMinutes,
       standardWorkMinutes: calculation.standardWorkMinutes,
       overtimeMinutes: calculation.overtimeMinutes,
@@ -72,7 +74,7 @@ export async function createAttendanceRecord(input: AttendanceInput) {
       earlyLeaveMinutes: calculation.earlyLeaveMinutes,
       status: calculation.status,
       source: "MANUAL",
-      remark: input.remark,
+      remark: normalizedInput.remark,
     },
   });
   return recordToView(record);
@@ -80,30 +82,31 @@ export async function createAttendanceRecord(input: AttendanceInput) {
 
 export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
-  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
+  const normalizedInput = normalizeAttendanceInput(input);
+  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.upsert({
-    where: { userId_workDate: { userId, workDate: input.workDate } },
+    where: { userId_workDate: { userId, workDate: normalizedInput.workDate } },
     update: {
-      checkInTime: input.checkInTime,
-      checkOutTime: input.checkOutTime,
-      rawCheckInText: input.rawCheckInText,
-      rawCheckOutText: input.rawCheckOutText,
+      checkInTime: normalizedInput.checkInTime,
+      checkOutTime: normalizedInput.checkOutTime,
+      rawCheckInText: normalizedInput.rawCheckInText,
+      rawCheckOutText: normalizedInput.rawCheckOutText,
       actualWorkMinutes: calculation.actualWorkMinutes,
       standardWorkMinutes: calculation.standardWorkMinutes,
       overtimeMinutes: calculation.overtimeMinutes,
       lateMinutes: calculation.lateMinutes,
       earlyLeaveMinutes: calculation.earlyLeaveMinutes,
       status: calculation.status,
-      remark: input.remark,
+      remark: normalizedInput.remark,
     },
     create: {
       userId,
-      workDate: input.workDate,
-      checkInTime: input.checkInTime,
-      checkOutTime: input.checkOutTime,
-      rawCheckInText: input.rawCheckInText,
-      rawCheckOutText: input.rawCheckOutText,
+      workDate: normalizedInput.workDate,
+      checkInTime: normalizedInput.checkInTime,
+      checkOutTime: normalizedInput.checkOutTime,
+      rawCheckInText: normalizedInput.rawCheckInText,
+      rawCheckOutText: normalizedInput.rawCheckOutText,
       actualWorkMinutes: calculation.actualWorkMinutes,
       standardWorkMinutes: calculation.standardWorkMinutes,
       overtimeMinutes: calculation.overtimeMinutes,
@@ -111,7 +114,7 @@ export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
       earlyLeaveMinutes: calculation.earlyLeaveMinutes,
       status: calculation.status,
       source: "MANUAL",
-      remark: input.remark,
+      remark: normalizedInput.remark,
     },
   });
 
@@ -121,22 +124,23 @@ export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
 export async function updateAttendanceRecord(id: string, input: AttendanceInput) {
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
-  const calculation = calculateDailyAttendance(input, await loadDefaultWorkRuleForUser(userId));
+  const normalizedInput = normalizeAttendanceInput(input);
+  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
   const record = await prisma.attendanceRecord.update({
     where: { id, userId },
     data: {
-      workDate: input.workDate,
-      checkInTime: input.checkInTime,
-      checkOutTime: input.checkOutTime,
-      rawCheckInText: input.rawCheckInText,
-      rawCheckOutText: input.rawCheckOutText,
+      workDate: normalizedInput.workDate,
+      checkInTime: normalizedInput.checkInTime,
+      checkOutTime: normalizedInput.checkOutTime,
+      rawCheckInText: normalizedInput.rawCheckInText,
+      rawCheckOutText: normalizedInput.rawCheckOutText,
       actualWorkMinutes: calculation.actualWorkMinutes,
       standardWorkMinutes: calculation.standardWorkMinutes,
       overtimeMinutes: calculation.overtimeMinutes,
       lateMinutes: calculation.lateMinutes,
       earlyLeaveMinutes: calculation.earlyLeaveMinutes,
       status: calculation.status,
-      remark: input.remark,
+      remark: normalizedInput.remark,
     },
   });
   return recordToView(record);
@@ -166,5 +170,12 @@ function recordToView(record: DbAttendanceRecord): AttendanceRecordView {
     source: record.source as AttendanceSource,
     remark: record.remark,
     issues: [],
+  };
+}
+
+function normalizeAttendanceInput(input: AttendanceInput): AttendanceInput {
+  return {
+    ...input,
+    workDate: normalizeWorkDate(input.workDate),
   };
 }

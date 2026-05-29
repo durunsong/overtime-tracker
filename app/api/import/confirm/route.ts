@@ -3,6 +3,7 @@ import { AttendanceStatus } from "@prisma/client";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
 import { getDefaultUserId, loadDefaultWorkRuleForUser } from "@/lib/data/attendance-repository";
+import { normalizeWorkDate } from "@/lib/attendance/records";
 import { normalizeImportedRecord } from "@/lib/excel/import-records";
 
 const confirmSchema = z.object({
@@ -69,7 +70,10 @@ export async function POST(request: Request) {
 
     for (const row of validRows) {
       if (!row.record) continue;
-      const record = normalizeImportedRecord(row.record, rule);
+      const record = normalizeImportedRecord(
+        { ...row.record, workDate: normalizeWorkDate(row.record.workDate) },
+        rule,
+      );
       await prisma.attendanceRecord.upsert({
         where: { userId_workDate: { userId, workDate: record.workDate } },
         update: {

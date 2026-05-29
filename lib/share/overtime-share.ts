@@ -3,6 +3,7 @@ import { createSecureToken } from "@/lib/auth/password";
 import { AuthRequiredError, getCurrentUser } from "@/lib/auth/session";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
 import { getPrisma } from "@/lib/prisma";
+import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { generateMonthlyReport } from "@/lib/reports/monthly";
 import type { AttendanceRecordView } from "@/types/attendance";
 import type { MonthlyReportView } from "@/types/report";
@@ -41,6 +42,26 @@ export function sanitizeShareToken(token: string) {
   return token;
 }
 
+export function formatChinaShareDateTime(date: Date) {
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  })
+    .formatToParts(date)
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} (UTC+8)`;
+}
+
 export function buildOvertimeSharePayload(
   report: MonthlyReportView,
   options: { ownerName: string; createdAt?: Date },
@@ -72,20 +93,22 @@ export function buildOvertimeSharePayload(
 }
 
 export function parseOvertimeSharePayload(payload: OvertimeSharePayload): ParsedOvertimeSharePayload {
+  const records = mergeRecordsByWorkDate(
+    payload.report.records.map((record, index) => ({
+      ...record,
+      id: `shared-${index}`,
+      userId: "public-share",
+      workDate: new Date(record.workDate),
+      checkInTime: record.checkInTime ? new Date(record.checkInTime) : null,
+      checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null,
+    })),
+  );
+  const report = generateMonthlyReport(records, payload.report.month);
+
   return {
     ...payload,
     createdAt: new Date(payload.createdAt),
-    report: {
-      ...payload.report,
-      records: payload.report.records.map((record, index) => ({
-        ...record,
-        id: `shared-${index}`,
-        userId: "public-share",
-        workDate: new Date(record.workDate),
-        checkInTime: record.checkInTime ? new Date(record.checkInTime) : null,
-        checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null,
-      })),
-    },
+    report,
   };
 }
 

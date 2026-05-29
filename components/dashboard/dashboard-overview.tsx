@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatCard } from "./stat-card";
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { toDateKey } from "@/lib/attendance/parser";
 
 export function DashboardOverview({ report }: { report: MonthlyReportView }) {
   const ranking = [...report.records]
@@ -67,7 +68,7 @@ export function DashboardOverview({ report }: { report: MonthlyReportView }) {
                 className="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.04] px-3 py-2"
               >
                 <div>
-                  <p className="text-sm text-white">{record.workDate.toISOString().slice(5, 10)}</p>
+                  <p className="text-sm text-white">{toDateKey(record.workDate).slice(5)}</p>
                   <p className="text-xs text-slate-500">{record.remark ?? "无备注"}</p>
                 </div>
                 <Badge tone={record.status === "NORMAL" ? "cyan" : "amber"}>

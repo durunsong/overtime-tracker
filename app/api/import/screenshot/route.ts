@@ -2,6 +2,7 @@ import { AttendanceStatus } from "@prisma/client";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { isAiConfigured } from "@/lib/ai/client";
 import { parseAttendanceScreenshots, type ScreenshotImportFile } from "@/lib/ai/screenshot-import";
+import { normalizeWorkDate } from "@/lib/attendance/records";
 import { getDefaultUserId } from "@/lib/data/attendance-repository";
 import { getScreenshotImportFileValidationError } from "@/lib/import/screenshot-files";
 import { jsonResponse } from "@/lib/utils";
@@ -61,8 +62,9 @@ export async function POST(request: Request) {
     });
 
     for (const row of validRows) {
-      const record = row.record;
-      if (!record) continue;
+      const sourceRecord = row.record;
+      if (!sourceRecord) continue;
+      const record = { ...sourceRecord, workDate: normalizeWorkDate(sourceRecord.workDate) };
 
       await prisma.attendanceRecord.upsert({
         where: { userId_workDate: { userId, workDate: record.workDate } },

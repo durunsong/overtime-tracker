@@ -8,6 +8,7 @@ import type {
 import type { MonthlyReportView, TrendPoint } from "@/types/report";
 import { defaultWorkRule } from "@/types/attendance";
 import { getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
+import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { toDateKey, toTimeOnDate } from "./parser";
 
 export function calculateDailyAttendance(
@@ -118,7 +119,7 @@ export function calculateMonthlyReport(
   records: AttendanceRecordView[],
   month: string,
 ): MonthlyReportView {
-  const monthRecords = records
+  const monthRecords = mergeRecordsByWorkDate(records)
     .filter((record) => format(record.workDate, "yyyy-MM") === month)
     .sort((a, b) => a.workDate.getTime() - b.workDate.getTime());
 

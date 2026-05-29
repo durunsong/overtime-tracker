@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { formatMinutes } from "@/lib/attendance/formatter";
-import type { ParsedOvertimeSharePayload } from "@/lib/share/overtime-share";
+import { toDateKey } from "@/lib/attendance/parser";
+import { formatChinaShareDateTime, type ParsedOvertimeSharePayload } from "@/lib/share/overtime-share";
 
 export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePayload }) {
   const ranking = [...share.report.records]
@@ -20,7 +21,7 @@ export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePaylo
             <p className="text-xs tracking-[0.22em] text-cyan-200/70">加班统计报告</p>
             <h1 className="mt-3 text-3xl font-semibold text-white">{share.ownerName} 的加班统计</h1>
             <p className="mt-2 text-sm text-slate-400">
-              {share.report.month} 月数据，生成时间：{share.createdAt.toLocaleString("zh-CN")}
+              {share.report.month} 月数据，生成时间：{formatChinaShareDateTime(share.createdAt)}
             </p>
           </div>
           <Badge tone="cyan">已分享给你</Badge>
@@ -75,14 +76,17 @@ export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePaylo
               ) : (
                 ranking.map((record) => (
                   <div
-                    key={record.workDate.toISOString()}
-                    className="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.04] px-3 py-2"
+                    key={toDateKey(record.workDate)}
+                    className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2"
                   >
-                    <div>
-                      <p className="text-sm text-white">{record.workDate.toISOString().slice(5, 10)}</p>
-                      <p className="text-xs text-slate-500">{record.remark ?? "无备注"}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm text-white">{toDateKey(record.workDate).slice(5)}</p>
+                      <p className="truncate text-xs text-slate-500">{record.remark ?? "无备注"}</p>
                     </div>
-                    <Badge tone={record.status === "NORMAL" ? "cyan" : "amber"}>
+                    <Badge
+                      tone={record.status === "NORMAL" ? "cyan" : "amber"}
+                      className="shrink-0 whitespace-nowrap"
+                    >
                       {formatMinutes(record.overtimeMinutes)}
                     </Badge>
                   </div>

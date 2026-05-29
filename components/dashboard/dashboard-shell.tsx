@@ -32,6 +32,8 @@ const navItems = [
 
 export function DashboardShell({ children, user }: { children: React.ReactNode; user: AuthUser }) {
   const pathname = usePathname();
+  const avatarSeed = getInitialAvatarSeed(user);
+  const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(avatarSeed)}`;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -85,9 +87,19 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 <h1 className="mt-1 text-xl font-semibold text-white">加班统计工作台</h1>
               </div>
               <div className="flex items-center gap-2">
-                <div className="hidden rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-right md:block">
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <p className="text-xs text-slate-500">{user.email}</p>
+                <div className="hidden items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 md:flex">
+                  <Image
+                    src={avatarUrl}
+                    alt={`${user.name} 的头像`}
+                    width={28}
+                    height={28}
+                    unoptimized
+                    className="h-7 w-7 shrink-0 rounded-full border border-white/10 bg-slate-900"
+                  />
+                  <div className="min-w-0 text-right">
+                    <p className="text-sm font-medium text-white">{user.name}</p>
+                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                  </div>
                 </div>
                 <Button asChild variant="secondary" size="sm">
                   <Link href="/dashboard/import">导入数据</Link>
@@ -107,4 +119,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
       </div>
     </div>
   );
+}
+
+function getInitialAvatarSeed(user: AuthUser) {
+  const source = (user.name || user.email).trim();
+  return Array.from(source).slice(0, 2).join("") || "OT";
 }
