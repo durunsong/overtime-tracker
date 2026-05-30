@@ -19,9 +19,38 @@ describe("attendance calculation", () => {
       checkOutTime: parseTime("19:30", workDate),
     });
 
-    expect(result.actualWorkMinutes).toBe(600);
+    expect(result.actualWorkMinutes).toBe(510);
     expect(result.overtimeMinutes).toBe(30);
     expect(result.status).toBe("NORMAL");
+  });
+
+  it("counts regular weekend work as eight overtime hours by default", () => {
+    const workDate = new Date("2026-05-30T00:00:00");
+    const result = calculateDailyAttendance({
+      workDate,
+      checkInTime: parseTime("09:17", workDate),
+      checkOutTime: parseTime("19:43", workDate),
+    });
+
+    expect(getChinaCalendarMeta(workDate).kind).toBe("WEEKEND");
+    expect(result.actualWorkMinutes).toBe(480);
+    expect(result.overtimeMinutes).toBe(480);
+    expect(result.lateMinutes).toBe(0);
+    expect(result.status).toBe("NORMAL");
+  });
+
+  it("deducts late arrival from regular weekend overtime by default", () => {
+    const workDate = new Date("2026-05-30T00:00:00");
+    const result = calculateDailyAttendance({
+      workDate,
+      checkInTime: parseTime("10:00", workDate),
+      checkOutTime: parseTime("19:00", workDate),
+    });
+
+    expect(result.actualWorkMinutes).toBe(450);
+    expect(result.overtimeMinutes).toBe(450);
+    expect(result.lateMinutes).toBe(30);
+    expect(result.status).toBe("LATE");
   });
 
   it("caps weekend overtime at standard work minutes when weekends are counted", () => {
@@ -96,7 +125,7 @@ describe("attendance calculation", () => {
     );
 
     expect(getChinaCalendarMeta(workDate).kind).toBe("ADJUSTED_WORKDAY");
-    expect(result.actualWorkMinutes).toBe(584);
+    expect(result.actualWorkMinutes).toBe(494);
     expect(result.overtimeMinutes).toBe(14);
     expect(result.status).toBe("NORMAL");
   });

@@ -110,14 +110,14 @@ export function RulesForm() {
                   <input type="checkbox" {...register("lunchBreakEnabled")} />
                   午休扣减
                 </span>
-                <span className="text-xs leading-5 text-slate-500">开启后从当天出勤时长里扣除午休分钟。</span>
+                <span className="text-xs leading-5 text-slate-500">按 12:00-13:30 与实际出勤重叠部分扣减。</span>
               </label>
               <label className="grid min-h-24 gap-2 rounded-md border border-cyan-300/20 bg-cyan-300/[0.04] p-3 text-sm text-slate-300">
                 <span className="flex items-center gap-2 font-medium text-cyan-50">
                   <input type="checkbox" {...register("weekendEnabled")} />
                   周末加班
                 </span>
-                <span className="text-xs leading-5 text-slate-400">双休周末打卡按加班统计，最多 8 小时，迟到从 8 小时内扣减。</span>
+                <span className="text-xs leading-5 text-slate-400">普通周末按 8 小时封顶统计，迟到和午休会扣减。</span>
               </label>
               <label className="grid min-h-24 gap-2 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">
                 <span className="flex items-center gap-2 font-medium text-slate-100">

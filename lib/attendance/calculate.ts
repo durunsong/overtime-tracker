@@ -1,4 +1,4 @@
-import { differenceInMinutes, format, getISOWeek } from "date-fns";
+import { addMinutes, differenceInMinutes, format, getISOWeek } from "date-fns";
 import type {
   AttendanceCalculation,
   AttendanceInput,
@@ -10,6 +10,8 @@ import { defaultWorkRule } from "@/types/attendance";
 import { getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { toDateKey, toTimeOnDate } from "./parser";
+
+const defaultLunchBreakStartTime = "12:00";
 
 export function calculateDailyAttendance(
   input: AttendanceInput,
@@ -61,7 +63,9 @@ export function calculateDailyAttendance(
     rule.beforeStartNotCount && input.checkInTime < start
       ? start
       : input.checkInTime;
-  const lunchMinutes = rule.lunchBreakEnabled ? rule.lunchBreakMinutes : 0;
+  const lunchMinutes = rule.lunchBreakEnabled
+    ? calculateLunchBreakOverlapMinutes(effectiveStart, input.checkOutTime, input.workDate, rule)
+    : 0;
   const rawActualWorkMinutes = Math.max(
     0,
     differenceInMinutes(input.checkOutTime, effectiveStart) - lunchMinutes,
@@ -99,6 +103,22 @@ export function calculateDailyAttendance(
     status: lateMinutes > 0 ? "LATE" : earlyLeaveMinutes > 0 ? "EARLY_LEAVE" : "NORMAL",
     issues,
   };
+}
+
+function calculateLunchBreakOverlapMinutes(
+  effectiveStart: Date,
+  effectiveEnd: Date,
+  workDate: Date,
+  rule: WorkRuleInput,
+) {
+  if (rule.lunchBreakMinutes <= 0) return 0;
+
+  const lunchStart = toTimeOnDate(defaultLunchBreakStartTime, workDate);
+  const lunchEnd = addMinutes(lunchStart, rule.lunchBreakMinutes);
+  const overlapStart = Math.max(effectiveStart.getTime(), lunchStart.getTime());
+  const overlapEnd = Math.min(effectiveEnd.getTime(), lunchEnd.getTime());
+
+  return Math.max(0, Math.floor((overlapEnd - overlapStart) / 60_000));
 }
 
 export function buildAttendanceRecord(

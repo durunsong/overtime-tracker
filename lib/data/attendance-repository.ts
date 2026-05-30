@@ -3,6 +3,7 @@ import { getPrisma } from "@/lib/prisma";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
 import { mergeRecordsByWorkDate, normalizeWorkDate } from "@/lib/attendance/records";
+import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
 import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
 import type {
   AttendanceRecordView,
@@ -40,17 +41,22 @@ export async function loadDefaultWorkRuleForUser(userId: string): Promise<WorkRu
     orderBy: { updatedAt: "desc" },
   });
 
-  return rule ?? defaultWorkRule;
+  return rule ? applyCurrentWorkRuleDefaults(rule) : defaultWorkRule;
 }
 
 export async function loadAttendanceRecords(month?: string) {
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
-  const records = await prisma.attendanceRecord.findMany({
-    where: { userId },
-    orderBy: { workDate: "asc" },
-  });
-  const views = mergeRecordsByWorkDate(records.map(recordToView));
+  const [records, rule] = await Promise.all([
+    prisma.attendanceRecord.findMany({
+      where: { userId },
+      orderBy: { workDate: "asc" },
+    }),
+    loadDefaultWorkRuleForUser(userId),
+  ]);
+  const views = mergeRecordsByWorkDate(records.map(recordToView)).map((record) =>
+    recalculateLoadedRecord(record, rule),
+  );
   return month ? views.filter((record) => format(record.workDate, "yyyy-MM") === month) : views;
 }
 
@@ -177,5 +183,31 @@ function normalizeAttendanceInput(input: AttendanceInput): AttendanceInput {
   return {
     ...input,
     workDate: normalizeWorkDate(input.workDate),
+  };
+}
+
+function recalculateLoadedRecord(record: AttendanceRecordView, rule: WorkRuleInput): AttendanceRecordView {
+  if (
+    !record.checkInTime ||
+    !record.checkOutTime ||
+    record.status === "REST_DAY" ||
+    record.status === "HOLIDAY"
+  ) {
+    return record;
+  }
+
+  return {
+    ...record,
+    ...calculateDailyAttendance(
+      {
+        workDate: record.workDate,
+        checkInTime: record.checkInTime,
+        checkOutTime: record.checkOutTime,
+        rawCheckInText: record.rawCheckInText,
+        rawCheckOutText: record.rawCheckOutText,
+        remark: record.remark,
+      },
+      rule,
+    ),
   };
 }

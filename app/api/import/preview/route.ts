@@ -1,6 +1,7 @@
 import { parseExcelBuffer } from "@/lib/excel/parse-excel";
 import { getImportFileValidationError } from "@/lib/excel/import-file";
 import { requireCurrentUserId } from "@/lib/auth/session";
+import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
 import { defaultWorkRule } from "@/types/attendance";
@@ -39,5 +40,5 @@ async function loadDefaultWorkRule() {
     orderBy: { updatedAt: "desc" },
   });
 
-  return rule ?? defaultWorkRule;
+  return rule ? applyCurrentWorkRuleDefaults(rule) : defaultWorkRule;
 }

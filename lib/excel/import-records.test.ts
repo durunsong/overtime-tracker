@@ -28,7 +28,7 @@ describe("normalizeImportedRecord", () => {
     );
 
     expect(record.overtimeMinutes).toBe(30);
-    expect(record.actualWorkMinutes).toBe(660);
+    expect(record.actualWorkMinutes).toBe(570);
     expect(record.status).toBe("NORMAL");
   });
 

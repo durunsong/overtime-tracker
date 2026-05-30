@@ -1,5 +1,6 @@
 import { defaultWorkRule } from "@/types/attendance";
 import { workRuleSchema } from "@/lib/attendance/validators";
+import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
@@ -19,7 +20,9 @@ export async function GET() {
       where: { userId, isDefault: true },
       orderBy: { updatedAt: "desc" },
     });
-    const rule = existingRule ?? (await prisma.workRule.create({ data: { ...defaultWorkRule, userId } }));
+    const rule = existingRule
+      ? applyCurrentWorkRuleDefaults(existingRule)
+      : await prisma.workRule.create({ data: { ...defaultWorkRule, userId } });
     return jsonResponse({ success: true, data: rule });
   } catch (error) {
     return jsonResponse(

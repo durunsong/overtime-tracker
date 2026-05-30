@@ -23,6 +23,7 @@ vi.mock("@/lib/auth/session", () => ({
 describe("attendance repository", () => {
   beforeEach(() => {
     prismaMock.workRule.findFirst.mockReset();
+    prismaMock.workRule.findFirst.mockResolvedValue(null);
     prismaMock.attendanceRecord.create.mockReset();
     prismaMock.attendanceRecord.findMany.mockReset();
   });
@@ -50,6 +51,37 @@ describe("attendance repository", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           overtimeMinutes: 30,
+        }),
+      }),
+    );
+  });
+
+  it("upgrades the initial legacy default rule for regular weekend overtime calculations", async () => {
+    const { createAttendanceRecord } = await import("./attendance-repository");
+    const workDate = new Date("2026-05-30T00:00:00");
+
+    prismaMock.workRule.findFirst.mockResolvedValue({
+      ...defaultWorkRule,
+      lunchBreakEnabled: false,
+      lunchBreakMinutes: 0,
+      weekendEnabled: false,
+    });
+    prismaMock.attendanceRecord.create.mockImplementation(async ({ data }) => ({
+      id: "record-1",
+      ...data,
+    }));
+
+    await createAttendanceRecord({
+      workDate,
+      checkInTime: parseTime("09:17", workDate),
+      checkOutTime: parseTime("19:43", workDate),
+    });
+
+    expect(prismaMock.attendanceRecord.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          actualWorkMinutes: 480,
+          overtimeMinutes: 480,
         }),
       }),
     );
@@ -88,6 +120,31 @@ describe("attendance repository", () => {
       }),
     );
     expect(toDateKey(records[0]!.workDate)).toBe("2026-05-26");
+  });
+
+  it("recalculates loaded punched records with the current default rule", async () => {
+    const { loadAttendanceRecords } = await import("./attendance-repository");
+    const workDate = new Date("2026-05-30T00:00:00.000Z");
+
+    prismaMock.attendanceRecord.findMany.mockResolvedValue([
+      buildDbRecord({
+        id: "weekend-old",
+        workDate,
+        checkInTime: parseTime("09:17", workDate),
+        checkOutTime: parseTime("19:43", workDate),
+        actualWorkMinutes: 613,
+        overtimeMinutes: 43,
+      }),
+    ]);
+
+    const records = await loadAttendanceRecords("2026-05");
+
+    expect(records[0]).toEqual(
+      expect.objectContaining({
+        actualWorkMinutes: 480,
+        overtimeMinutes: 480,
+      }),
+    );
   });
 });
 

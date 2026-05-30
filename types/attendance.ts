@@ -65,9 +65,9 @@ export const defaultWorkRule: WorkRuleInput = {
   standardWorkMinutes: 480,
   overtimeStartTime: "19:00",
   beforeStartNotCount: true,
-  lunchBreakEnabled: false,
-  lunchBreakMinutes: 0,
-  weekendEnabled: false,
+  lunchBreakEnabled: true,
+  lunchBreakMinutes: 90,
+  weekendEnabled: true,
   holidayEnabled: false,
   isDefault: true,
 };
