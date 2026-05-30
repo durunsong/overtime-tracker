@@ -8,7 +8,7 @@
 - Tailwind CSS v4、本地 shadcn/ui 风格组件、Framer Motion
 - Prisma ORM、Neon PostgreSQL
 - Recharts、xlsx、date-fns、zod、react-hook-form、sonner、lucide-react
-- Vercel AI SDK 兼容 OpenAI 接口
+- Vercel AI SDK + OpenAI 兼容接口
 
 ## 环境变量
 
@@ -19,9 +19,10 @@ DATABASE_URL="你的 Neon pooled connection string"
 DIRECT_URL="你的 Neon direct connection string"
 NEXT_PUBLIC_APP_NAME="Overtime Tracker"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-AI_BASE_URL="你的 AI 兼容接口基础地址"
-AI_API_KEY="你的 AI Key"
-AI_MODEL="你的模型名称"
+AI_PROVIDER="deepseek"
+AI_BASE_URL="https://api.deepseek.com"
+AI_API_KEY="你的 DeepSeek API Key"
+AI_MODEL="deepseek-v4-flash"
 ```
 
 ## Prisma / Neon
@@ -89,7 +90,7 @@ npm run dev
 
 ## AI 配置
 
-AI 通过 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 接入 OpenAI 兼容接口。未配置时接口会直接返回错误，不启用 Mock 回答。
+AI 通过 `AI_PROVIDER`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 接入 OpenAI 兼容接口。DeepSeek 可配置为 `AI_PROVIDER="deepseek"`、`AI_BASE_URL="https://api.deepseek.com"`、`AI_MODEL="deepseek-v4-flash"`。未配置完整 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 时接口会直接返回错误，不启用 Mock 回答。
 
 ## 验证命令
 
