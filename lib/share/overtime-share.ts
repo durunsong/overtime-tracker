@@ -1,10 +1,10 @@
-import { getCurrentMonthKey } from "@/lib/calendar/month";
 import { createSecureToken } from "@/lib/auth/password";
 import { AuthRequiredError, getCurrentUser } from "@/lib/auth/session";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
 import { getPrisma } from "@/lib/prisma";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { getCurrentMonth } from "@/lib/date/month";
 import type { AttendanceRecordView } from "@/types/attendance";
 import type { MonthlyReportView } from "@/types/report";
 
@@ -112,7 +112,7 @@ export function parseOvertimeSharePayload(payload: OvertimeSharePayload): Parsed
   };
 }
 
-export async function createCurrentUserOvertimeShare(month = getCurrentMonthKey()) {
+export async function createCurrentUserOvertimeShare(month = getCurrentMonth()) {
   const user = await getCurrentUser();
   if (!user) {
     throw new AuthRequiredError("请先登录后再分享加班数据");

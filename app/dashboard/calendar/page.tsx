@@ -1,8 +1,8 @@
-import { resolveMonthKey } from "@/lib/calendar/month";
 import { CalendarWorkbench } from "@/components/calendar/calendar-workbench";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCalendarMonth } from "@/lib/calendar/china-calendar";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { getMonthOrCurrent } from "@/lib/date/month";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ type CalendarPageProps = {
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const params = await searchParams;
-  const month = resolveMonthKey(params.month);
+  const month = getMonthOrCurrent(params.month);
   let calendar;
 
   try {

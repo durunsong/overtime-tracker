@@ -1,11 +1,11 @@
 import { jsonResponse } from "@/lib/utils";
-import { resolveMonthKey } from "@/lib/calendar/month";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
 import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { getMonthOrCurrent } from "@/lib/date/month";
 
 export async function GET(request: Request) {
   try {
-    const month = resolveMonthKey(new URL(request.url).searchParams.get("month"));
+    const month = getMonthOrCurrent(new URL(request.url).searchParams.get("month"));
     const records = await loadAttendanceRecords(month);
     const report = generateMonthlyReport(records, month);
     return jsonResponse({ success: true, data: report });

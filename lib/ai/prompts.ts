@@ -1,6 +1,5 @@
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
-import { getCurrentMonthKey } from "@/lib/calendar/month";
 
 export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
   return `
@@ -51,54 +50,32 @@ ${JSON.stringify(
 `;
 }
 
-export function buildScreenshotImportSystemPrompt() {
+export function buildScreenshotImportPrompt(fileNames: string[]) {
   return `
-你是考勤截图 OCR 与结构化抽取助手。你的任务是把截图中的“每日考勤行”转成 JSON，不允许编造截图里不存在的数据。
+你是考勤截图 OCR 与结构化抽取助手。请只基于用户上传的截图识别打卡记录，不要补造截图中不存在的信息。
 
-必须遵守：
-- 只输出一个 JSON 对象，禁止 Markdown、禁止解释、禁止代码块。
-- 每条记录对应一个自然日；同一日期多次打卡时，checkIn 取最早，checkOut 取最晚。
-- 表头、字段名、按钮文案、统计汇总行不要写入 records。
-- 日期统一输出 yyyy-MM-dd；时间统一输出 HH:mm（24 小时制，需补零）。
-- 截图里缺失的时间字段输出 null，不要猜测。
-- 休息日/节假日如果没有打卡时间，status 写“休息”或“节假日”，checkIn/checkOut 为 null。
-- 忽略“合计、总计、平均、统计、本月、应出勤”等汇总行。
-`.trim();
-}
-
-export function buildScreenshotImportPrompt(fileNames: string[], options?: { retry?: boolean }) {
-  const currentMonth = getCurrentMonthKey();
-  const retryHint = options?.retry
-    ? "\n上次输出无法解析，请严格只返回 JSON 对象本身，字段名必须是 records。"
-    : "";
-
-  return `
-请识别以下 ${fileNames.length} 张考勤截图，并抽取全部有效打卡记录。当前参考月份是 ${currentMonth}；若截图里只有“5月7日”这类无年份日期，请优先归入 ${currentMonth} 所在年份。
-
-图片列表：
+需要识别的图片文件：
 ${fileNames.map((fileName, index) => `${index + 1}. ${fileName}`).join("\n")}
 
-常见字段别名：
-- 日期：日期 / 考勤日期 / 打卡日期 / date
-- 上班：上班 / 签到 / 首次打卡 / 上班打卡 / check in
-- 下班：下班 / 签退 / 末次打卡 / 下班打卡 / check out
-- 状态：正常 / 迟到 / 早退 / 缺卡 / 休息 / 节假日 / 异常
-
-若截图是列表或日历视图，请逐行提取每个日期的数据；若一行里出现“正常(09:16),正常(19:16)”这类格式，请解析括号内时间。
-
-输出 JSON 结构：
+请从截图中抽取每日打卡数据，输出严格 JSON，不要 Markdown，不要解释：
 {
   "records": [
     {
       "date": "yyyy-MM-dd",
-      "name": "姓名，可为空字符串",
-      "checkIn": "HH:mm 或 null",
-      "checkOut": "HH:mm 或 null",
-      "status": "正常/休息/节假日/迟到/早退/缺卡，可为空",
+      "name": "姓名，可为空",
+      "checkIn": "HH:mm，可为空",
+      "checkOut": "HH:mm，可为空",
       "remark": "识别依据或异常说明，可为空"
     }
   ]
 }
-${retryHint}
-`.trim();
+
+规则：
+- 同一天可能有多次打卡时，checkIn 取最早打卡时间，checkOut 取最晚打卡时间。
+- 不要把表头或字段名（如 date、name、checkIn、checkOut、remark、日期、姓名、上班、下班）输出为 records。
+- 如果截图只有日期但缺少上班或下班时间，对应字段返回 null，不要猜测。
+- 如果日期含中文、斜杠或点号，请统一转为 yyyy-MM-dd。
+- 如果无法识别任何有效日期，records 返回空数组。
+- 只输出 JSON 对象本身。
+`;
 }

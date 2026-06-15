@@ -1,5 +1,5 @@
-import { getCurrentMonthKey } from "@/lib/calendar/month";
 import type { AttendanceStatus } from "@/types/attendance";
+import { getCurrentMonth } from "@/lib/date/month";
 
 export const RECORD_STATUS_FILTERS = [
   "ALL",
@@ -20,16 +20,14 @@ export type RecordFilterState = {
   status: RecordStatusFilter;
 };
 
-export function createDefaultRecordFilters(now = new Date()): RecordFilterState {
-  return {
-    keyword: "",
-    month: getCurrentMonthKey(now),
-    status: "ALL",
-  };
-}
+export const DEFAULT_RECORD_FILTERS: RecordFilterState = {
+  keyword: "",
+  month: getCurrentMonth(),
+  status: "ALL",
+};
 
-export function resetRecordFilters(now = new Date()): RecordFilterState {
-  return createDefaultRecordFilters(now);
+export function resetRecordFilters(): RecordFilterState {
+  return { ...DEFAULT_RECORD_FILTERS, month: getCurrentMonth() };
 }
 
 export function isRecordStatusFilter(value: string): value is RecordStatusFilter {

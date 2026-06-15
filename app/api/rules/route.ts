@@ -1,6 +1,6 @@
 import { defaultWorkRule } from "@/types/attendance";
-import { workRuleSchema } from "@/lib/attendance/validators";
 import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
+import { workRuleSchema } from "@/lib/attendance/validators";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";

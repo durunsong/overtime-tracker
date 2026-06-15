@@ -6,19 +6,10 @@ export type AiProviderConfig = {
   apiKey: string;
   baseURL: string;
   model: string;
-  visionModel: string;
 };
 
 export function isAiConfigured() {
   return Boolean(readEnv("AI_BASE_URL") && readEnv("AI_API_KEY") && readEnv("AI_MODEL"));
-}
-
-export function isAiVisionConfigured() {
-  return isAiConfigured() && Boolean(getAiVisionModelName());
-}
-
-export function getAiVisionModelName() {
-  return readEnv("AI_VISION_MODEL") ?? readEnv("AI_MODEL");
 }
 
 export function getAiProviderConfig(): AiProviderConfig {
@@ -35,7 +26,6 @@ export function getAiProviderConfig(): AiProviderConfig {
     apiKey,
     baseURL,
     model,
-    visionModel: getAiVisionModelName() ?? model,
   };
 }
 
@@ -48,17 +38,6 @@ export function getAiLanguageModel() {
   });
 
   return provider.chat(config.model);
-}
-
-export function getAiVisionLanguageModel() {
-  const config = getAiProviderConfig();
-
-  const provider = createOpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseURL,
-  });
-
-  return provider.chat(config.visionModel);
 }
 
 export async function generateAiText(prompt: string) {

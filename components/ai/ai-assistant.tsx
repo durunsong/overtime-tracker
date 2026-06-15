@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Textarea } from "@/components/ui/textarea";
-import { getCurrentMonthKey } from "@/lib/calendar/month";
+import { getCurrentMonth } from "@/lib/date/month";
 
 const examples = [
   "我这个月加班多少小时？",
@@ -19,15 +19,10 @@ const examples = [
 ];
 
 export function AiAssistant() {
-  const [month, setMonth] = useState(getCurrentMonthKey);
+  const [month, setMonth] = useState(() => getCurrentMonth());
   const [question, setQuestion] = useState(examples[0]);
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
-
-  function changeMonth(nextMonth: string) {
-    setMonth(nextMonth);
-    setAnswer("");
-  }
 
   async function ask() {
     setLoading(true);
@@ -75,7 +70,7 @@ export function AiAssistant() {
           <MonthPicker
             aria-label="选择 AI 分析月份"
             value={month}
-            onChange={changeMonth}
+            onChange={setMonth}
           />
           <Textarea value={question} onChange={(event) => setQuestion(event.target.value)} />
           <div className="flex flex-wrap gap-2">

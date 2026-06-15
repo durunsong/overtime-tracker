@@ -1,11 +1,10 @@
 import * as XLSX from "xlsx";
-import { getCurrentMonthKey } from "@/lib/calendar/month";
+import { getCurrentMonthDate } from "@/lib/date/month";
 
-export function createAttendanceImportTemplate(now = new Date()): Buffer {
-  const month = getCurrentMonthKey(now);
-  const templateRows = [
+function buildTemplateRows() {
+  return [
     {
-      "日期": `${month}-01`,
+      "日期": getCurrentMonthDate(1),
       "姓名": "张三",
       "上班时间": "09:30",
       "下班时间": "20:30",
@@ -13,7 +12,7 @@ export function createAttendanceImportTemplate(now = new Date()): Buffer {
       "备注": "示例：请替换为真实考勤数据",
     },
     {
-      "日期": `${month}-04`,
+      "日期": getCurrentMonthDate(4),
       "姓名": "张三",
       "上班时间": "09:30",
       "下班时间": "19:30",
@@ -21,8 +20,10 @@ export function createAttendanceImportTemplate(now = new Date()): Buffer {
       "备注": "",
     },
   ];
+}
 
-  const worksheet = XLSX.utils.json_to_sheet(templateRows, {
+export function createAttendanceImportTemplate(): Buffer {
+  const worksheet = XLSX.utils.json_to_sheet(buildTemplateRows(), {
     header: ["日期", "姓名", "上班时间", "下班时间", "考勤状态", "备注"],
   });
 

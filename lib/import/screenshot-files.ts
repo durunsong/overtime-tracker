@@ -1,30 +1,10 @@
 const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 
-export function inferScreenshotMimeType(fileName: string, mimeType: string) {
-  if (allowedImageTypes.has(mimeType)) {
-    return mimeType;
-  }
-
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (extension === "png") {
-    return "image/png";
-  }
-  if (extension === "jpg" || extension === "jpeg") {
-    return "image/jpeg";
-  }
-  if (extension === "webp") {
-    return "image/webp";
-  }
-
-  return mimeType;
-}
-
 export const maxScreenshotFileCount = 10;
 export const maxScreenshotFileSize = 10 * 1024 * 1024;
 export const maxScreenshotTotalSize = 50 * 1024 * 1024;
 
 type ScreenshotFileLike = {
-  name: string;
   type: string;
   size: number;
 };
@@ -43,10 +23,9 @@ export function getScreenshotImportFileValidationError(files: ScreenshotFileLike
     return "截图总大小不能超过 50MB";
   }
 
-  const invalidFile = files.find((file) => {
-    const mimeType = inferScreenshotMimeType(file.name, file.type);
-    return !allowedImageTypes.has(mimeType) || file.size > maxScreenshotFileSize;
-  });
+  const invalidFile = files.find(
+    (file) => !allowedImageTypes.has(file.type) || file.size > maxScreenshotFileSize,
+  );
   if (invalidFile) {
     return "仅支持 PNG / JPG / WebP，且单张不能超过 10MB";
   }
