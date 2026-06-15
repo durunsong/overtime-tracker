@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getAiLanguageModel, getAiProviderConfig, isAiConfigured } from "./client";
+import { getAiLanguageModel, getAiProviderConfig, getAiVisionLanguageModel, isAiConfigured } from "./client";
 
 const originalEnv = { ...process.env };
 
@@ -20,7 +20,19 @@ describe("AI provider config", () => {
       apiKey: "test-key",
       baseURL: "https://api.deepseek.com",
       model: "deepseek-v4-flash",
+      visionModel: "deepseek-v4-flash",
     });
+  });
+
+  it("prefers AI_VISION_MODEL for screenshot recognition", () => {
+    process.env.AI_PROVIDER = "zhipu";
+    process.env.AI_API_KEY = "test-key";
+    process.env.AI_BASE_URL = "https://open.bigmodel.cn/api/paas/v4/";
+    process.env.AI_MODEL = "glm-4-flash";
+    process.env.AI_VISION_MODEL = "glm-4v-flash";
+
+    expect(getAiProviderConfig().visionModel).toBe("glm-4v-flash");
+    expect(getAiVisionLanguageModel().modelId).toBe("glm-4v-flash");
   });
 
   it("defaults provider name without changing the configured endpoint or model", () => {
@@ -35,6 +47,7 @@ describe("AI provider config", () => {
       apiKey: "test-key",
       baseURL: "https://custom.example.com/v1",
       model: "custom-model",
+      visionModel: "custom-model",
     });
   });
 

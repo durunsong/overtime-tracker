@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { getCurrentMonthKey } from "@/lib/calendar/month";
 import { createSecureToken } from "@/lib/auth/password";
 import { AuthRequiredError, getCurrentUser } from "@/lib/auth/session";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
@@ -112,7 +112,7 @@ export function parseOvertimeSharePayload(payload: OvertimeSharePayload): Parsed
   };
 }
 
-export async function createCurrentUserOvertimeShare(month = format(new Date(), "yyyy-MM")) {
+export async function createCurrentUserOvertimeShare(month = getCurrentMonthKey()) {
   const user = await getCurrentUser();
   if (!user) {
     throw new AuthRequiredError("请先登录后再分享加班数据");

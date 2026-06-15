@@ -1,9 +1,16 @@
 import { generateText } from "ai";
-import { z } from "zod";
+import {
+  inferReferenceMonthKey,
+  normalizeAiDate,
+  normalizeAiStatusText,
+  normalizeAiTime,
+  normalizeOptionalAiText,
+} from "@/lib/ai/attendance-text-normalize";
+import { getAiVisionLanguageModel } from "@/lib/ai/client";
+import { parseScreenshotAiJson, type ParsedAiScreenshotRecord } from "@/lib/ai/screenshot-json";
 import { toDateKey } from "@/lib/attendance/parser";
 import { validateAttendanceRow } from "@/lib/attendance/validators";
-import { getAiLanguageModel } from "./client";
-import { buildScreenshotImportPrompt } from "./prompts";
+import { buildScreenshotImportPrompt, buildScreenshotImportSystemPrompt } from "./prompts";
 import type { ImportPreview } from "@/types/import";
 
 export type ScreenshotImportFile = {
@@ -12,21 +19,16 @@ export type ScreenshotImportFile = {
   buffer: ArrayBuffer;
 };
 
-const screenshotAiBatchSize = 3;
+type NormalizedAiRecord = {
+  date: string;
+  name: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
+  remark: string | null;
+  status: string | null;
+};
 
-const aiRecordSchema = z.object({
-  date: z.string().min(1),
-  name: z.string().nullish(),
-  checkIn: z.string().nullish(),
-  checkOut: z.string().nullish(),
-  remark: z.string().nullish(),
-});
-
-const aiResultSchema = z.object({
-  records: z.array(aiRecordSchema),
-});
-
-type AiRecord = z.infer<typeof aiRecordSchema>;
+const SUMMARY_KEYWORDS = ["合计", "总计", "平均", "统计", "应出勤", "实出勤", "本月汇总", "summary"];
 
 export async function parseAttendanceScreenshots(
   files: ScreenshotImportFile[],
@@ -51,17 +53,41 @@ export async function parseAttendanceScreenshotBatches(
 }
 
 async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Promise<ImportPreview> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const records = await requestScreenshotRecords(files, attempt > 0);
+      return buildScreenshotImportPreview(records);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(getErrorMessage(error));
+    }
+  }
+
+  throw lastError ?? new Error("AI 识别失败");
+}
+
+async function requestScreenshotRecords(files: ScreenshotImportFile[], retry: boolean) {
   const result = await generateText({
-    model: getAiLanguageModel(),
+    model: getAiVisionLanguageModel(),
     messages: [
+      {
+        role: "system",
+        content: buildScreenshotImportSystemPrompt(),
+      },
       {
         role: "user",
         content: [
-          { type: "text", text: buildScreenshotImportPrompt(files.map((file) => file.fileName)) },
+          {
+            type: "text",
+            text: buildScreenshotImportPrompt(
+              files.map((file) => file.fileName),
+              { retry },
+            ),
+          },
           ...files.map((file) => ({
             type: "image" as const,
-            image: file.buffer,
-            mediaType: file.mimeType,
+            image: toDataUri(file),
           })),
         ],
       },
@@ -69,15 +95,17 @@ async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Pr
     temperature: 0,
   });
 
-  const parsed = aiResultSchema.parse(parseJsonObject(result.text));
-  return buildScreenshotImportPreview(parsed.records);
+  return parseScreenshotAiJson(result.text);
 }
 
 export function chunkScreenshotImportFiles(files: ScreenshotImportFile[]) {
+  const batchSize = getScreenshotBatchSize();
   const chunks: ScreenshotImportFile[][] = [];
-  for (let index = 0; index < files.length; index += screenshotAiBatchSize) {
-    chunks.push(files.slice(index, index + screenshotAiBatchSize));
+
+  for (let index = 0; index < files.length; index += batchSize) {
+    chunks.push(files.slice(index, index + batchSize));
   }
+
   return chunks;
 }
 
@@ -134,14 +162,21 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "当前批次处理失败";
 }
 
-export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview {
-  const rows = records.filter((row) => !isHeaderLikeRecord(row));
-  const previewRows = rows.map((row, index) => {
+export function buildScreenshotImportPreview(records: ParsedAiScreenshotRecord[]): ImportPreview {
+  const referenceMonth = inferReferenceMonthKey(records);
+  const referenceDate = new Date(`${referenceMonth}-01T12:00:00`);
+  const normalizedRecords = records
+    .map((row) => normalizeAiRecord(row, referenceDate))
+    .filter((row) => !isHeaderLikeRecord(row) && !isSummaryLikeRecord(row));
+
+  const previewRows = normalizedRecords.map((row, index) => {
+    const statusText = normalizeAiStatusText(row.status, row.remark);
     const validation = validateAttendanceRow({
       name: row.name ?? undefined,
       date: row.date,
       checkIn: row.checkIn ?? undefined,
       checkOut: row.checkOut ?? undefined,
+      statusText: statusText ?? undefined,
       remark: row.remark ?? undefined,
     });
 
@@ -230,6 +265,18 @@ function mergeValidPreviewRows(left: PreviewRow, right: PreviewRow): PreviewRow 
   };
 }
 
+function normalizeAiRecord(row: ParsedAiScreenshotRecord, referenceDate: Date): NormalizedAiRecord {
+  const date = normalizeAiDate(row.date, referenceDate);
+  return {
+    date: date ?? String(row.date ?? "").trim(),
+    name: normalizeOptionalAiText(row.name),
+    checkIn: normalizeAiTime(row.checkIn),
+    checkOut: normalizeAiTime(row.checkOut),
+    remark: normalizeOptionalAiText(row.remark),
+    status: normalizeOptionalAiText(row.status),
+  };
+}
+
 function rawText(value: unknown) {
   return value == null ? "" : String(value);
 }
@@ -252,13 +299,14 @@ function chooseTimeText(
       : rightText;
 }
 
-function isHeaderLikeRecord(row: AiRecord) {
+function isHeaderLikeRecord(row: NormalizedAiRecord) {
   const values = [
     [row.date, ["date", "日期", "打卡日期", "考勤日期"]],
     [row.name, ["name", "姓名", "员工姓名"]],
     [row.checkIn, ["checkin", "check in", "上班", "上班时间", "签到时间"]],
     [row.checkOut, ["checkout", "check out", "下班", "下班时间", "签退时间"]],
     [row.remark, ["remark", "备注", "说明"]],
+    [row.status, ["status", "状态", "考勤状态"]],
   ] as const;
 
   const hitCount = values.filter(([value, aliases]) => {
@@ -269,21 +317,28 @@ function isHeaderLikeRecord(row: AiRecord) {
   return hitCount >= 2;
 }
 
+function isSummaryLikeRecord(row: NormalizedAiRecord) {
+  const merged = [row.date, row.name, row.remark, row.status].filter(Boolean).join(" ");
+  return SUMMARY_KEYWORDS.some((keyword) => merged.includes(keyword));
+}
+
 function normalizeHeaderText(value: unknown) {
   if (typeof value !== "string") return "";
   return value.trim().toLowerCase().replace(/[\s_\-：:]/g, "");
 }
 
-function parseJsonObject(text: string) {
-  const trimmed = text.trim();
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const candidate = fenced?.[1] ?? trimmed;
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
+function toDataUri(file: ScreenshotImportFile) {
+  const mimeType = file.mimeType || "image/png";
+  const base64 = Buffer.from(file.buffer).toString("base64");
+  return `data:${mimeType};base64,${base64}`;
+}
 
-  if (start < 0 || end < start) {
-    throw new Error("AI 未返回可解析的 JSON 结果");
+function getScreenshotBatchSize() {
+  const raw = process.env.AI_SCREENSHOT_BATCH_SIZE?.trim();
+  const parsed = raw ? Number(raw) : 1;
+  if (!Number.isFinite(parsed)) {
+    return 1;
   }
 
-  return JSON.parse(candidate.slice(start, end + 1)) as unknown;
+  return Math.min(3, Math.max(1, Math.floor(parsed)));
 }

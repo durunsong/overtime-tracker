@@ -5,7 +5,8 @@ import { createAttendanceImportTemplate } from "./import-template";
 
 describe("createAttendanceImportTemplate", () => {
   it("generates a workbook with recognizable attendance headers and examples", () => {
-    const buffer = createAttendanceImportTemplate();
+    const now = new Date("2026-06-15T10:00:00");
+    const buffer = createAttendanceImportTemplate(now);
     const workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
     const sheet = workbook.Sheets["考勤导入模板"];
 
@@ -24,7 +25,7 @@ describe("createAttendanceImportTemplate", () => {
       "备注",
     ]);
     expect(rows[0]).toMatchObject({
-      "日期": "2026-05-01",
+      "日期": "2026-06-01",
       "姓名": "张三",
       "上班时间": "09:30",
       "下班时间": "20:30",

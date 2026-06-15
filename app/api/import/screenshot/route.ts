@@ -1,17 +1,21 @@
 import { AttendanceStatus } from "@prisma/client";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
-import { isAiConfigured } from "@/lib/ai/client";
+import { isAiVisionConfigured } from "@/lib/ai/client";
 import { parseAttendanceScreenshots, type ScreenshotImportFile } from "@/lib/ai/screenshot-import";
 import { normalizeWorkDate } from "@/lib/attendance/records";
 import { getDefaultUserId } from "@/lib/data/attendance-repository";
-import { getScreenshotImportFileValidationError } from "@/lib/import/screenshot-files";
+import { getScreenshotImportFileValidationError, inferScreenshotMimeType } from "@/lib/import/screenshot-files";
 import { jsonResponse } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
-    if (!isAiConfigured()) {
+    if (!isAiVisionConfigured()) {
       return jsonResponse(
-        { success: false, error: "AI 服务未配置，请设置 AI_BASE_URL、AI_API_KEY 和 AI_MODEL" },
+        {
+          success: false,
+          error:
+            "AI 视觉服务未配置，请设置 AI_BASE_URL、AI_API_KEY、AI_MODEL，并建议使用支持识图的 AI_VISION_MODEL（如 glm-4v-flash）",
+        },
         { status: 400 },
       );
     }
@@ -34,7 +38,7 @@ export async function POST(request: Request) {
     const imageFiles: ScreenshotImportFile[] = await Promise.all(
       files.map(async (file) => ({
         fileName: file.name,
-        mimeType: file.type,
+        mimeType: inferScreenshotMimeType(file.name, file.type),
         buffer: await file.arrayBuffer(),
       })),
     );

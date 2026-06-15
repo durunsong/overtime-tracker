@@ -48,10 +48,63 @@ describe("buildScreenshotImportPreview", () => {
     expect(preview.rows[0]?.record?.rawCheckOutText).toBe("22:31");
     expect(preview.rows[0]?.record?.overtimeMinutes).toBe(211);
   });
+  it("normalizes wrapped punch text and Chinese dates before validation", () => {
+    const preview = buildScreenshotImportPreview([
+      {
+        date: "2026年5月27日",
+        checkIn: "正常(09:16)",
+        checkOut: "正常(19:16)",
+      },
+    ]);
+
+    expect(preview.validRows).toBe(1);
+    expect(preview.rows[0]?.raw.date).toBe("2026-05-27");
+    expect(preview.rows[0]?.raw.checkIn).toBe("09:16");
+    expect(preview.rows[0]?.raw.checkOut).toBe("19:16");
+  });
+
+  it("imports rest days from status text", () => {
+    const preview = buildScreenshotImportPreview([
+      {
+        date: "2026-05-01",
+        status: "休息",
+        remark: "休息(-,-)",
+      },
+    ]);
+
+    expect(preview.validRows).toBe(1);
+    expect(preview.rows[0]?.record?.status).toBe("REST_DAY");
+  });
 });
 
 describe("chunkScreenshotImportFiles", () => {
-  it("splits screenshots into groups of three to keep each AI request bounded", () => {
+  it("splits screenshots into single-image batches by default", () => {
+    const files = Array.from({ length: 4 }, (_, index) => screenshotFile(`shot-${index + 1}.png`));
+
+    const chunks = chunkScreenshotImportFiles(files);
+
+    expect(chunks.map((chunk) => chunk.map((file) => file.fileName))).toEqual([
+      ["shot-1.png"],
+      ["shot-2.png"],
+      ["shot-3.png"],
+      ["shot-4.png"],
+    ]);
+  });
+
+  it("respects AI_SCREENSHOT_BATCH_SIZE up to three", () => {
+    process.env.AI_SCREENSHOT_BATCH_SIZE = "3";
+    const files = Array.from({ length: 4 }, (_, index) => screenshotFile(`shot-${index + 1}.png`));
+
+    const chunks = chunkScreenshotImportFiles(files);
+
+    expect(chunks.map((chunk) => chunk.length)).toEqual([3, 1]);
+    delete process.env.AI_SCREENSHOT_BATCH_SIZE;
+  });
+});
+
+describe("chunkScreenshotImportFiles legacy batching", () => {
+  it("splits screenshots into groups of three when configured", () => {
+    process.env.AI_SCREENSHOT_BATCH_SIZE = "3";
     const files = Array.from({ length: 10 }, (_, index) => screenshotFile(`shot-${index + 1}.png`));
 
     const chunks = chunkScreenshotImportFiles(files);
@@ -62,6 +115,7 @@ describe("chunkScreenshotImportFiles", () => {
       ["shot-7.png", "shot-8.png", "shot-9.png"],
       ["shot-10.png"],
     ]);
+    delete process.env.AI_SCREENSHOT_BATCH_SIZE;
   });
 });
 

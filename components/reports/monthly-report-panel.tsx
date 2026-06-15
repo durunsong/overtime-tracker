@@ -11,12 +11,18 @@ import { AiThinking, MarkdownAnswer } from "@/components/ai/ai-assistant";
 import type { AttendanceRecordView } from "@/types/attendance";
 import { generateMonthlyReport, buildReportText } from "@/lib/reports/monthly";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { getCurrentMonthKey } from "@/lib/calendar/month";
 
 export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[] }) {
-  const [month, setMonth] = useState("2026-05");
+  const [month, setMonth] = useState(getCurrentMonthKey);
   const [aiSummary, setAiSummary] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const report = useMemo(() => generateMonthlyReport(records, month), [month, records]);
+
+  function changeMonth(nextMonth: string) {
+    setMonth(nextMonth);
+    setAiSummary("");
+  }
 
   async function generateAiSummary() {
     setAiLoading(true);
@@ -94,7 +100,7 @@ export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[
               className="w-36"
               aria-label="选择月报月份"
               value={month}
-              onChange={setMonth}
+              onChange={changeMonth}
             />
             <Button onClick={generateAiSummary} disabled={aiLoading}>
               <Sparkles className="h-4 w-4" /> {aiLoading ? "生成中" : "AI 总结"}

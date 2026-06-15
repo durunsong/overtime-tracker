@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { resolveMonthKey } from "@/lib/calendar/month";
 import { CalendarWorkbench } from "@/components/calendar/calendar-workbench";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCalendarMonth } from "@/lib/calendar/china-calendar";
@@ -14,9 +14,7 @@ type CalendarPageProps = {
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const params = await searchParams;
-  const month = params.month && /^\d{4}-\d{2}$/.test(params.month)
-    ? params.month
-    : format(new Date(), "yyyy-MM");
+  const month = resolveMonthKey(params.month);
   let calendar;
 
   try {

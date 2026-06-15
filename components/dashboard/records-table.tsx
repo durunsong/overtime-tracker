@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import type { AttendanceRecordView, AttendanceStatus } from "@/types/attendance";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
-import { DEFAULT_RECORD_FILTERS, isRecordStatusFilter, resetRecordFilters } from "./records-filter";
+import { createDefaultRecordFilters, isRecordStatusFilter, resetRecordFilters, type RecordStatusFilter } from "./records-filter";
 
 const statusLabel: Record<AttendanceStatus, string> = {
   NORMAL: "正常",
@@ -30,9 +30,9 @@ const statusOptions = [
 
 export function RecordsTable({ initialRecords }: { initialRecords: AttendanceRecordView[] }) {
   const [records, setRecords] = useState(initialRecords);
-  const [keyword, setKeyword] = useState(DEFAULT_RECORD_FILTERS.keyword);
-  const [status, setStatus] = useState(DEFAULT_RECORD_FILTERS.status);
-  const [month, setMonth] = useState(DEFAULT_RECORD_FILTERS.month);
+  const [keyword, setKeyword] = useState(() => createDefaultRecordFilters().keyword);
+  const [status, setStatus] = useState<RecordStatusFilter>(() => createDefaultRecordFilters().status);
+  const [month, setMonth] = useState(() => createDefaultRecordFilters().month);
 
   const filtered = useMemo(
     () =>

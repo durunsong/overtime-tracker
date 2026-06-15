@@ -1,13 +1,13 @@
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { generateMonthlyReport } from "@/lib/reports/monthly";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { getCurrentMonthKey } from "@/lib/calendar/month";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const month = format(new Date(), "yyyy-MM");
+  const month = getCurrentMonthKey();
   let report;
 
   try {

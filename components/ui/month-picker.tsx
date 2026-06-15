@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCurrentMonthKey } from "@/lib/calendar/month";
 
 const monthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1).padStart(2, "0"),
@@ -69,10 +70,9 @@ export function MonthPicker({
   }
 
   function selectCurrentMonth() {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    setViewYear(currentYear);
-    onChange(`${currentYear}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    const currentMonth = getCurrentMonthKey();
+    setViewYear(Number(currentMonth.slice(0, 4)));
+    onChange(currentMonth);
     setOpen(false);
   }
 
@@ -166,7 +166,7 @@ export function MonthPicker({
 }
 
 function getYear(value: string) {
-  return parseMonth(value)?.year ?? new Date().getFullYear();
+  return parseMonth(value)?.year ?? Number(getCurrentMonthKey().slice(0, 4));
 }
 
 function parseMonth(value: string) {
