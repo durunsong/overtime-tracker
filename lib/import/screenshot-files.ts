@@ -24,6 +24,7 @@ export const maxScreenshotFileSize = 10 * 1024 * 1024;
 export const maxScreenshotTotalSize = 50 * 1024 * 1024;
 
 type ScreenshotFileLike = {
+  name: string;
   type: string;
   size: number;
 };
