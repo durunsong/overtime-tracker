@@ -15,6 +15,7 @@ import {
   Table2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/app-meta";
 import { Button } from "@/components/ui/button";
 import { ShareOvertimeButton } from "@/components/dashboard/share-overtime-button";
 import type { AuthUser } from "@/lib/auth/session";
@@ -44,8 +45,8 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
     <div className="h-dvh overflow-hidden bg-[#070b12] text-slate-100">
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:44px_44px]" />
       <div className="relative flex h-full min-h-0">
-        <aside className="hidden h-dvh w-72 flex-none overflow-y-auto border-r border-white/10 bg-slate-950/70 px-5 py-6 backdrop-blur-xl lg:block">
-          <Link href="/" className="flex items-center gap-3">
+        <aside className="hidden h-dvh w-72 flex-none flex-col border-r border-white/10 bg-slate-950/70 px-5 py-6 backdrop-blur-xl lg:flex">
+          <Link href="/" className="flex shrink-0 items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-slate-950 ring-1 ring-cyan-200/30">
               <Image src="/icon.svg" alt="" width={40} height={40} aria-hidden="true" priority />
             </div>
@@ -55,7 +56,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
             </div>
           </Link>
 
-          <nav className="mt-8 space-y-1">
+          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (
@@ -75,6 +76,10 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
               );
             })}
           </nav>
+
+          <div className="mt-4 shrink-0 border-t border-white/10 pt-4">
+            <p className="px-3 text-xs text-slate-500">版本 v{APP_VERSION}</p>
+          </div>
         </aside>
 
         <main className="flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto">

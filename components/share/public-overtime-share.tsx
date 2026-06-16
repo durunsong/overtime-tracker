@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { toDateKey } from "@/lib/attendance/parser";
+import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 import { formatChinaShareDateTime, type ParsedOvertimeSharePayload } from "@/lib/share/overtime-share";
 
 export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePayload }) {
   const ranking = [...share.report.records]
     .sort((a, b) => b.overtimeMinutes - a.overtimeMinutes)
     .slice(0, 6);
+  const averageOvertimeHelper = buildAverageOvertimeHelper(share.report);
 
   return (
     <main className="min-h-dvh bg-[#070b12] text-slate-100">
@@ -30,7 +32,14 @@ export function PublicOvertimeShare({ share }: { share: ParsedOvertimeSharePaylo
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="总加班" value={formatMinutes(share.report.overtimeMinutes)} helper="分享时的数据快照" icon={Timer} />
           <StatCard title="出勤天数" value={`${share.report.workDays} 天`} helper="按有效记录统计" icon={CalendarDays} tone="emerald" />
-          <StatCard title="平均每日加班" value={formatMinutes(share.report.averageOvertimeMinutes)} helper="月度平均值" icon={Clock3} tone="amber" />
+          <StatCard
+            title="平均每日加班"
+            value={formatMinutes(share.report.averageOvertimeMinutes)}
+            helper={averageOvertimeHelper.helper}
+            extra={averageOvertimeHelper.extra}
+            icon={Clock3}
+            tone="amber"
+          />
           <StatCard title="异常打卡" value={`${share.report.abnormalCount} 次`} helper="缺卡或时间冲突" icon={TriangleAlert} tone="rose" />
         </div>
 

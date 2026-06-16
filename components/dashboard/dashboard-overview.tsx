@@ -5,19 +5,28 @@ import { Badge } from "@/components/ui/badge";
 import { StatCard } from "./stat-card";
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 import { toDateKey } from "@/lib/attendance/parser";
 
 export function DashboardOverview({ report }: { report: MonthlyReportView }) {
   const ranking = [...report.records]
     .sort((a, b) => b.overtimeMinutes - a.overtimeMinutes)
     .slice(0, 5);
+  const averageOvertimeHelper = buildAverageOvertimeHelper(report);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard title="本月总加班" value={formatMinutes(report.overtimeMinutes)} helper="工作日与周末口径汇总" icon={Timer} />
         <StatCard title="本月出勤天数" value={`${report.workDays} 天`} helper="排除缺卡与异常记录" icon={CalendarDays} tone="emerald" />
-        <StatCard title="平均每日加班" value={formatMinutes(report.averageOvertimeMinutes)} helper="工作日维度平均值" icon={Clock3} tone="amber" />
+        <StatCard
+          title="平均每日加班"
+          value={formatMinutes(report.averageOvertimeMinutes)}
+          helper={averageOvertimeHelper.helper}
+          extra={averageOvertimeHelper.extra}
+          icon={Clock3}
+          tone="amber"
+        />
         <StatCard title="异常打卡次数" value={`${report.abnormalCount} 次`} helper="缺卡或时间冲突" icon={AlertTriangle} tone="rose" />
       </div>
 

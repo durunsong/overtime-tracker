@@ -11,6 +11,10 @@ import { getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { toDateKey, toTimeOnDate } from "./parser";
 
+function isWeekendCalendarDay(workDate: Date) {
+  return getChinaCalendarMeta(workDate).kind === "WEEKEND";
+}
+
 const defaultLunchBreakStartTime = "12:00";
 
 export function calculateDailyAttendance(
@@ -146,7 +150,17 @@ export function calculateMonthlyReport(
   const workableRecords = monthRecords.filter(
     (record) => !["ABSENT", "ABNORMAL", "REST_DAY", "HOLIDAY"].includes(record.status),
   );
+  const weekdayRecords = workableRecords.filter((record) => !isWeekendCalendarDay(record.workDate));
+  const weekendRecords = workableRecords.filter((record) => isWeekendCalendarDay(record.workDate));
   const overtimeValues = workableRecords.map((record) => record.overtimeMinutes);
+  const weekdayOvertimeMinutes = weekdayRecords.reduce(
+    (sum, record) => sum + record.overtimeMinutes,
+    0,
+  );
+  const weekendOvertimeMinutes = weekendRecords.reduce(
+    (sum, record) => sum + record.overtimeMinutes,
+    0,
+  );
   const overtimeMinutes = monthRecords.reduce(
     (sum, record) => sum + record.overtimeMinutes,
     0,
@@ -162,7 +176,11 @@ export function calculateMonthlyReport(
     ),
     standardWorkMinutes: workDays * 480,
     overtimeMinutes,
-    averageOvertimeMinutes: workDays > 0 ? Math.round(overtimeMinutes / workDays) : 0,
+    averageOvertimeMinutes:
+      weekdayRecords.length > 0 ? Math.round(weekdayOvertimeMinutes / weekdayRecords.length) : 0,
+    weekendOvertimeMinutes,
+    weekdayWorkDays: weekdayRecords.length,
+    weekendWorkDays: weekendRecords.length,
     maxDailyOvertimeMinutes:
       overtimeValues.length > 0 ? Math.max(...overtimeValues) : 0,
     minDailyOvertimeMinutes:

@@ -167,6 +167,27 @@ describe("attendance calculation", () => {
     ).toBe("ABNORMAL");
   });
 
+  it("calculates weekday average overtime without weekend records", () => {
+    const weekday = buildAttendanceRecord("weekday", {
+      workDate: new Date("2026-05-04T00:00:00"),
+      checkInTime: parseTime("09:15", new Date("2026-05-04T00:00:00")),
+      checkOutTime: parseTime("19:07", new Date("2026-05-04T00:00:00")),
+    });
+    const weekend = buildAttendanceRecord("weekend", {
+      workDate: new Date("2026-05-30T00:00:00"),
+      checkInTime: parseTime("09:17", new Date("2026-05-30T00:00:00")),
+      checkOutTime: parseTime("19:43", new Date("2026-05-30T00:00:00")),
+    });
+
+    const report = calculateMonthlyReport([weekday, weekend], "2026-05");
+
+    expect(report.weekdayWorkDays).toBe(1);
+    expect(report.weekendWorkDays).toBe(1);
+    expect(report.weekendOvertimeMinutes).toBe(480);
+    expect(report.averageOvertimeMinutes).toBe(weekday.overtimeMinutes);
+    expect(report.averageOvertimeMinutes).toBeLessThan(weekend.overtimeMinutes);
+  });
+
   it("builds monthly report trends and counters", () => {
     const records = [
       buildAttendanceRecord("case-1", {

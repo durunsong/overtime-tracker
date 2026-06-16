@@ -1,7 +1,10 @@
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 
 export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
+  const averageOvertimeHelper = buildAverageOvertimeHelper(report);
+
   return `
 你是专业的考勤与工作投入分析助手。只能基于以下真实统计数据生成总结，不能编造不存在的日期、时长或原因。
 如果数据不足，请直接说明数据不足。
@@ -11,7 +14,8 @@ export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
 总有效出勤：${formatMinutes(report.actualWorkMinutes)}
 总标准工时：${formatMinutes(report.standardWorkMinutes)}
 总加班：${formatMinutes(report.overtimeMinutes)}
-平均每日加班：${formatMinutes(report.averageOvertimeMinutes)}
+平均每日加班：${formatMinutes(report.averageOvertimeMinutes)}（${averageOvertimeHelper.helper}）
+${averageOvertimeHelper.extra}
 最高单日加班：${formatMinutes(report.maxDailyOvertimeMinutes)}
 最低单日加班：${formatMinutes(report.minDailyOvertimeMinutes)}
 迟到次数：${report.lateCount}
@@ -37,6 +41,10 @@ ${JSON.stringify(
     workDays: report.workDays,
     actualWorkMinutes: report.actualWorkMinutes,
     overtimeMinutes: report.overtimeMinutes,
+    averageOvertimeMinutes: report.averageOvertimeMinutes,
+    weekendOvertimeMinutes: report.weekendOvertimeMinutes,
+    weekdayWorkDays: report.weekdayWorkDays,
+    weekendWorkDays: report.weekendWorkDays,
     lateCount: report.lateCount,
     earlyLeaveCount: report.earlyLeaveCount,
     abnormalCount: report.abnormalCount,

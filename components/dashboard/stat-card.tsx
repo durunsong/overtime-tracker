@@ -6,12 +6,14 @@ export function StatCard({
   title,
   value,
   helper,
+  extra,
   icon: Icon,
   tone = "cyan",
 }: {
   title: string;
   value: string;
   helper: string;
+  extra?: string;
   icon: LucideIcon;
   tone?: "cyan" | "emerald" | "amber" | "rose";
 }) {
@@ -29,6 +31,7 @@ export function StatCard({
           <p className="text-sm text-slate-400">{title}</p>
           <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
           <p className="mt-2 text-xs text-slate-500">{helper}</p>
+          {extra ? <p className="mt-1 text-xs text-slate-500">{extra}</p> : null}
         </div>
         <div className={cn("rounded-md p-2.5", toneClass)}>
           <Icon className="h-5 w-5" />

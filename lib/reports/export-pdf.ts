@@ -1,7 +1,9 @@
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 
 export function buildPrintableReportHtml(report: MonthlyReportView) {
+  const averageOvertimeHelper = buildAverageOvertimeHelper(report);
   const rows = report.records
     .map(
       (record) => `
@@ -39,7 +41,7 @@ export function buildPrintableReportHtml(report: MonthlyReportView) {
       <div class="grid">
         <div class="card"><div class="label">出勤天数</div><div class="value">${report.workDays} 天</div></div>
         <div class="card"><div class="label">总加班</div><div class="value">${formatMinutes(report.overtimeMinutes)}</div></div>
-        <div class="card"><div class="label">平均加班</div><div class="value">${formatMinutes(report.averageOvertimeMinutes)}</div></div>
+        <div class="card"><div class="label">平均每日加班（工作日）</div><div class="value">${formatMinutes(report.averageOvertimeMinutes)}</div><div class="label" style="margin-top:8px">${averageOvertimeHelper.extra}</div></div>
         <div class="card"><div class="label">异常次数</div><div class="value">${report.abnormalCount} 次</div></div>
       </div>
       <h2>每日明细</h2>

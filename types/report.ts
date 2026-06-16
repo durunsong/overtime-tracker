@@ -15,6 +15,9 @@ export type MonthlyReportView = {
   standardWorkMinutes: number;
   overtimeMinutes: number;
   averageOvertimeMinutes: number;
+  weekendOvertimeMinutes: number;
+  weekdayWorkDays: number;
+  weekendWorkDays: number;
   maxDailyOvertimeMinutes: number;
   minDailyOvertimeMinutes: number;
   lateCount: number;

@@ -10,6 +10,9 @@ const report: MonthlyReportView = {
   standardWorkMinutes: 960,
   overtimeMinutes: 150,
   averageOvertimeMinutes: 75,
+  weekendOvertimeMinutes: 0,
+  weekdayWorkDays: 2,
+  weekendWorkDays: 0,
   maxDailyOvertimeMinutes: 120,
   minDailyOvertimeMinutes: 30,
   lateCount: 0,
@@ -45,7 +48,8 @@ describe("monthly report output", () => {
     const text = buildReportText(report);
 
     expect(text).toContain("加班时长：2小时30分钟");
-    expect(text).toContain("平均每日加班：1小时15分钟");
+    expect(text).toContain("平均每日加班：1小时15分钟（按工作日平均，不含周末加班）");
+    expect(text).toContain("本月无周末打卡，平均值仅统计工作日");
   });
 
   test("打印版不包含 AI 总结区块", () => {
