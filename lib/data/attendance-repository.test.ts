@@ -6,6 +6,9 @@ const prismaMock = vi.hoisted(() => ({
   workRule: {
     findFirst: vi.fn(),
   },
+  workDayOverride: {
+    findMany: vi.fn(),
+  },
   attendanceRecord: {
     create: vi.fn(),
     findMany: vi.fn(),
@@ -24,6 +27,8 @@ describe("attendance repository", () => {
   beforeEach(() => {
     prismaMock.workRule.findFirst.mockReset();
     prismaMock.workRule.findFirst.mockResolvedValue(null);
+    prismaMock.workDayOverride.findMany.mockReset();
+    prismaMock.workDayOverride.findMany.mockResolvedValue([]);
     prismaMock.attendanceRecord.create.mockReset();
     prismaMock.attendanceRecord.findMany.mockReset();
   });

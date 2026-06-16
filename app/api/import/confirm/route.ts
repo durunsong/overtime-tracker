@@ -3,6 +3,8 @@ import { AttendanceStatus } from "@prisma/client";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
 import { getDefaultUserId, loadDefaultWorkRuleForUser } from "@/lib/data/attendance-repository";
+import { loadWorkDayOverrideMapForUser } from "@/lib/data/work-day-override-repository";
+import { toDateKey } from "@/lib/attendance/parser";
 import { normalizeWorkDate } from "@/lib/attendance/records";
 import { normalizeImportedRecord } from "@/lib/excel/import-records";
 
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
     const prisma = getPrisma();
     const userId = await getDefaultUserId();
     const rule = await loadDefaultWorkRuleForUser(userId);
+    const overrideMap = await loadWorkDayOverrideMapForUser(userId);
     const batch = await prisma.importBatch.create({
       data: {
         userId,
@@ -73,6 +76,7 @@ export async function POST(request: Request) {
       const record = normalizeImportedRecord(
         { ...row.record, workDate: normalizeWorkDate(row.record.workDate) },
         rule,
+        { dayKindOverride: overrideMap.get(toDateKey(normalizeWorkDate(row.record.workDate))) ?? null },
       );
       await prisma.attendanceRecord.upsert({
         where: { userId_workDate: { userId, workDate: record.workDate } },

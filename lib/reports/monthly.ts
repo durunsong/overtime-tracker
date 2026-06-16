@@ -2,9 +2,16 @@ import type { AttendanceRecordView } from "@/types/attendance";
 import { calculateMonthlyReport } from "@/lib/attendance/calculate";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
+import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
 
-export function generateMonthlyReport(records: AttendanceRecordView[], month: string) {
-  return calculateMonthlyReport(records, month);
+export function generateMonthlyReport(
+  records: AttendanceRecordView[],
+  month: string,
+  rule: WorkRuleInput = defaultWorkRule,
+  overrideMap: Map<string, WorkDayOverrideKind> = new Map(),
+) {
+  return calculateMonthlyReport(records, month, rule, overrideMap);
 }
 
 export function buildReportText(report: ReturnType<typeof calculateMonthlyReport>) {

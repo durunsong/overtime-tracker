@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
-import { loadAttendanceRecords, getDefaultUserId } from "@/lib/data/attendance-repository";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { streamMonthlyReportSummary } from "@/lib/ai/tools";
 
 const schema = z.object({
@@ -12,11 +11,10 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const { month } = schema.parse(await request.json());
-    const records = await loadAttendanceRecords(month);
-    const report = generateMonthlyReport(records, month);
+    const { userId, report } = await loadMonthlyReportContext(month);
     const result = streamMonthlyReportSummary(report, {
       onFinish: async ({ text }) => {
-        await saveMonthlyReportSummary(month, report, text);
+        await saveMonthlyReportSummary(userId, month, report, text);
       },
     });
 
@@ -35,11 +33,15 @@ export async function POST(request: Request) {
   }
 }
 
-async function saveMonthlyReportSummary(month: string, report: ReturnType<typeof generateMonthlyReport>, summary: string) {
+async function saveMonthlyReportSummary(
+  userId: string,
+  month: string,
+  report: Awaited<ReturnType<typeof loadMonthlyReportContext>>["report"],
+  summary: string,
+) {
   if (!isDatabaseConfigured()) return;
 
   const prisma = getPrisma();
-  const userId = await getDefaultUserId();
   await prisma.monthlyReport.upsert({
     where: { userId_month: { userId, month } },
     update: {

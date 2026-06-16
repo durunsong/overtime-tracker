@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
-import { loadAttendanceRecords, getDefaultUserId } from "@/lib/data/attendance-repository";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { getDefaultUserId } from "@/lib/data/attendance-repository";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 
 const schema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
@@ -11,12 +11,11 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const { month } = schema.parse(await request.json());
-    const records = await loadAttendanceRecords(month);
-    const report = generateMonthlyReport(records, month);
+    const userId = await getDefaultUserId();
+    const { report } = await loadMonthlyReportContext(month);
 
     if (isDatabaseConfigured()) {
       const prisma = getPrisma();
-      const userId = await getDefaultUserId();
       await prisma.monthlyReport.upsert({
         where: { userId_month: { userId, month } },
         update: {

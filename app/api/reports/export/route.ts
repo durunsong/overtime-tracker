@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { exportMonthlyReportExcel } from "@/lib/reports/export-excel";
 import { buildPrintableReportHtml } from "@/lib/reports/export-pdf";
 
@@ -11,7 +10,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   const { month, type } = schema.parse(await request.json());
-  const report = generateMonthlyReport(await loadAttendanceRecords(month), month);
+  const { report } = await loadMonthlyReportContext(month);
 
   if (type === "html") {
     return new Response(buildPrintableReportHtml(report), {

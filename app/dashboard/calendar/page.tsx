@@ -2,6 +2,8 @@ import { CalendarWorkbench } from "@/components/calendar/calendar-workbench";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCalendarMonth } from "@/lib/calendar/china-calendar";
 import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { loadWorkDayOverrideMapForUser } from "@/lib/data/work-day-override-repository";
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { getMonthOrCurrent } from "@/lib/date/month";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +20,12 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   let calendar;
 
   try {
-    calendar = buildCalendarMonth(month, await loadAttendanceRecords(month));
+    const userId = await requireCurrentUserId();
+    const [records, overrideMap] = await Promise.all([
+      loadAttendanceRecords(month),
+      loadWorkDayOverrideMapForUser(userId, month),
+    ]);
+    calendar = buildCalendarMonth(month, records, overrideMap);
   } catch (error) {
     return (
       <Card>

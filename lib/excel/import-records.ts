@@ -1,5 +1,6 @@
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
 import type { AttendanceStatus, WorkRuleInput } from "@/types/attendance";
+import type { DailyCalculationOptions } from "@/lib/attendance/calculate";
 
 export type ImportableAttendanceRecord = {
   workDate: Date;
@@ -19,6 +20,7 @@ export type ImportableAttendanceRecord = {
 export function normalizeImportedRecord(
   record: ImportableAttendanceRecord,
   rule: WorkRuleInput,
+  options: DailyCalculationOptions = {},
 ): ImportableAttendanceRecord {
   if (record.status === "REST_DAY" || record.status === "HOLIDAY") {
     return {
@@ -41,6 +43,7 @@ export function normalizeImportedRecord(
       remark: record.remark,
     },
     rule,
+    options,
   );
 
   return {

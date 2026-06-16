@@ -1,14 +1,14 @@
 import { MonthlyReportPanel } from "@/components/reports/monthly-report-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { loadAttendanceContext } from "@/lib/data/attendance-context";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  let records;
+  let context;
 
   try {
-    records = await loadAttendanceRecords();
+    context = await loadAttendanceContext();
   } catch (error) {
     return (
       <Card>
@@ -25,5 +25,11 @@ export default async function ReportsPage() {
     );
   }
 
-  return <MonthlyReportPanel records={records} />;
+  return (
+    <MonthlyReportPanel
+      records={context.records}
+      rule={context.rule}
+      overrideMap={context.overrideMap}
+    />
+  );
 }

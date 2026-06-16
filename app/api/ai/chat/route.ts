@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { jsonResponse } from "@/lib/utils";
-import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { streamAttendanceQuestion } from "@/lib/ai/tools";
 
 const schema = z.object({
@@ -12,8 +11,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const { month, question } = schema.parse(await request.json());
-    const records = await loadAttendanceRecords(month);
-    const report = generateMonthlyReport(records, month);
+    const { report } = await loadMonthlyReportContext(month);
     const result = streamAttendanceQuestion(report, question);
 
     return result.toTextStreamResponse({

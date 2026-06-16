@@ -29,6 +29,12 @@ enum ImportBatchStatus {
   PARTIAL_SUCCESS
 }
 
+enum WorkDayOverrideKind {
+  FORCE_WORKDAY
+  FORCE_REST
+  FORCE_HOLIDAY
+}
+
 model User {
   id                String             @id @default(cuid())
   name              String
@@ -40,6 +46,7 @@ model User {
   attendanceRecords AttendanceRecord[]
   importBatches     ImportBatch[]
   workRules         WorkRule[]
+  workDayOverrides  WorkDayOverride[]
   monthlyReports    MonthlyReport[]
   overtimeShares    OvertimeShare[]
   createdAt         DateTime           @default(now())
@@ -127,6 +134,7 @@ model WorkRule {
   standardWorkMinutes  Int      @default(480)
   overtimeStartTime    String   @default("19:00")
   beforeStartNotCount  Boolean  @default(true)
+  lunchBreakStartTime  String   @default("12:00")
   lunchBreakEnabled    Boolean  @default(true)
   lunchBreakMinutes    Int      @default(90)
   weekendEnabled       Boolean  @default(true)
@@ -136,6 +144,20 @@ model WorkRule {
   updatedAt            DateTime @updatedAt
 
   @@index([userId, isDefault])
+}
+
+model WorkDayOverride {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workDate  DateTime
+  kind      WorkDayOverrideKind
+  remark    String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([userId, workDate])
+  @@index([userId])
 }
 
 model MonthlyReport {

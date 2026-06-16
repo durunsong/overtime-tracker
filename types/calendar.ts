@@ -1,4 +1,5 @@
 import type { AttendanceRecordView } from "./attendance";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
 
 export type ChinaDayKind = "WORKDAY" | "WEEKEND" | "HOLIDAY" | "ADJUSTED_WORKDAY";
 
@@ -16,6 +17,7 @@ export type CalendarDay = ChinaCalendarMeta & {
   isCurrentMonth: boolean;
   isToday: boolean;
   record: AttendanceRecordView | null;
+  personalOverrideKind?: WorkDayOverrideKind | null;
 };
 
 export type CalendarMonth = {

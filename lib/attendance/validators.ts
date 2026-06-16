@@ -28,6 +28,7 @@ export const workRuleSchema = z.object({
   standardWorkMinutes: z.coerce.number().int().positive(),
   overtimeStartTime: timeSchema,
   beforeStartNotCount: z.boolean(),
+  lunchBreakStartTime: timeSchema,
   lunchBreakEnabled: z.boolean(),
   lunchBreakMinutes: z.coerce.number().int().min(0),
   weekendEnabled: z.boolean(),

@@ -3,7 +3,10 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { isAiConfigured } from "@/lib/ai/client";
 import { parseAttendanceScreenshots, type ScreenshotImportFile } from "@/lib/ai/screenshot-import";
 import { normalizeWorkDate } from "@/lib/attendance/records";
-import { getDefaultUserId } from "@/lib/data/attendance-repository";
+import { getDefaultUserId, loadDefaultWorkRuleForUser } from "@/lib/data/attendance-repository";
+import { loadWorkDayOverrideMapForUser } from "@/lib/data/work-day-override-repository";
+import { normalizeImportedRecord } from "@/lib/excel/import-records";
+import { toDateKey } from "@/lib/attendance/parser";
 import { getScreenshotImportFileValidationError } from "@/lib/import/screenshot-files";
 import { jsonResponse } from "@/lib/utils";
 
@@ -38,11 +41,15 @@ export async function POST(request: Request) {
         buffer: await file.arrayBuffer(),
       })),
     );
-    const preview = await parseAttendanceScreenshots(imageFiles);
+    const userId = await getDefaultUserId();
+    const [rule, overrideMap] = await Promise.all([
+      loadDefaultWorkRuleForUser(userId),
+      loadWorkDayOverrideMapForUser(userId),
+    ]);
+    const preview = await parseAttendanceScreenshots(imageFiles, rule);
     const validRows = preview.rows.filter((row) => row.record && row.errors.length === 0);
     const failedRows = preview.rows.length - validRows.length;
     const prisma = getPrisma();
-    const userId = await getDefaultUserId();
     const batch = await prisma.importBatch.create({
       data: {
         userId,
@@ -64,7 +71,12 @@ export async function POST(request: Request) {
     for (const row of validRows) {
       const sourceRecord = row.record;
       if (!sourceRecord) continue;
-      const record = { ...sourceRecord, workDate: normalizeWorkDate(sourceRecord.workDate) };
+      const workDate = normalizeWorkDate(sourceRecord.workDate);
+      const record = normalizeImportedRecord(
+        { ...sourceRecord, workDate },
+        rule,
+        { dayKindOverride: overrideMap.get(toDateKey(workDate)) ?? null },
+      );
 
       await prisma.attendanceRecord.upsert({
         where: { userId_workDate: { userId, workDate: record.workDate } },

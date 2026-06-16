@@ -16,11 +16,18 @@ export type WorkRuleInput = {
   standardWorkMinutes: number;
   overtimeStartTime: string;
   beforeStartNotCount: boolean;
+  lunchBreakStartTime: string;
   lunchBreakEnabled: boolean;
   lunchBreakMinutes: number;
   weekendEnabled: boolean;
   holidayEnabled: boolean;
   isDefault?: boolean;
+};
+
+export type WorkDayOverrideInput = {
+  workDate: Date;
+  kind: "FORCE_WORKDAY" | "FORCE_REST" | "FORCE_HOLIDAY";
+  remark?: string | null;
 };
 
 export type AttendanceInput = {
@@ -65,6 +72,7 @@ export const defaultWorkRule: WorkRuleInput = {
   standardWorkMinutes: 480,
   overtimeStartTime: "19:00",
   beforeStartNotCount: true,
+  lunchBreakStartTime: "12:00",
   lunchBreakEnabled: true,
   lunchBreakMinutes: 90,
   weekendEnabled: true,

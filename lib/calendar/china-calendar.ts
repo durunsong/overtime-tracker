@@ -12,6 +12,7 @@ import {
 } from "date-fns";
 import type { AttendanceRecordView } from "@/types/attendance";
 import type { CalendarMonth, ChinaCalendarMeta } from "@/types/calendar";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
 import { toDateKey } from "@/lib/attendance/parser";
 import { getChinaHolidayDefinition } from "@/lib/calendar/china-holiday-rules";
 import { formatChineseLunarDate } from "@/lib/calendar/lunar";
@@ -36,6 +37,7 @@ export function getChinaCalendarMeta(date: Date): ChinaCalendarMeta {
 export function buildCalendarMonth(
   month: string,
   records: AttendanceRecordView[],
+  overrideMap: Map<string, WorkDayOverrideKind> = new Map(),
 ): CalendarMonth {
   const monthRecords = records.filter((record) => format(record.workDate, "yyyy-MM") === month);
   const monthDate = parse(`${month}-01`, "yyyy-MM-dd", new Date());
@@ -58,6 +60,7 @@ export function buildCalendarMonth(
         isCurrentMonth: isSameMonth(date, monthDate),
         isToday: isToday(date),
         record: recordMap.get(key) ?? null,
+        personalOverrideKind: overrideMap.get(key) ?? null,
       };
     }),
   };

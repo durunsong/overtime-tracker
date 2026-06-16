@@ -8,21 +8,53 @@ import type {
 import type { MonthlyReportView, TrendPoint } from "@/types/report";
 import { defaultWorkRule } from "@/types/attendance";
 import { getChinaCalendarMeta } from "@/lib/calendar/china-calendar";
+import {
+  isCountedNonWorkdayKind,
+  resolveEffectiveDayKind,
+  type WorkDayOverrideKind,
+} from "@/lib/calendar/day-kind";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
+import { toWorkRuleSnapshot } from "@/lib/attendance/work-rule";
 import { toDateKey, toTimeOnDate } from "./parser";
 
-function isWeekendCalendarDay(workDate: Date) {
-  return getChinaCalendarMeta(workDate).kind === "WEEKEND";
+export type DailyCalculationOptions = {
+  dayKindOverride?: WorkDayOverrideKind | null;
+};
+
+function isWeekendLikeDay(workDate: Date, overrideMap?: Map<string, WorkDayOverrideKind>) {
+  const baseKind = getChinaCalendarMeta(workDate).kind;
+  const effectiveKind = resolveEffectiveDayKind(
+    baseKind,
+    overrideMap?.get(toDateKey(workDate)),
+  );
+  return effectiveKind === "WEEKEND";
 }
 
-const defaultLunchBreakStartTime = "12:00";
+const defaultLunchBreakStartTime = defaultWorkRule.lunchBreakStartTime;
 
 export function calculateDailyAttendance(
   input: AttendanceInput,
   rule: WorkRuleInput = defaultWorkRule,
+  options: DailyCalculationOptions = {},
 ): AttendanceCalculation {
   const issues: string[] = [];
   const standardWorkMinutes = rule.standardWorkMinutes;
+  const effectiveKind = resolveEffectiveDayKind(
+    getChinaCalendarMeta(input.workDate).kind,
+    options.dayKindOverride,
+  );
+
+  if (effectiveKind === "FORCED_REST") {
+    return {
+      actualWorkMinutes: 0,
+      standardWorkMinutes: 0,
+      overtimeMinutes: 0,
+      lateMinutes: 0,
+      earlyLeaveMinutes: 0,
+      status: "REST_DAY",
+      issues: [],
+    };
+  }
 
   if (!input.checkInTime && !input.checkOutTime) {
     return {
@@ -79,10 +111,7 @@ export function calculateDailyAttendance(
     0,
     differenceInMinutes(end, input.checkOutTime),
   );
-  const dayMeta = getChinaCalendarMeta(input.workDate);
-  const isCountedNonWorkday =
-    (dayMeta.kind === "WEEKEND" && rule.weekendEnabled) ||
-    (dayMeta.kind === "HOLIDAY" && rule.holidayEnabled);
+  const isCountedNonWorkday = isCountedNonWorkdayKind(effectiveKind, rule);
   const nonWorkdayWorkLimit = Math.max(0, standardWorkMinutes - lateMinutes);
   const actualWorkMinutes = isCountedNonWorkday
     ? Math.min(rawActualWorkMinutes, nonWorkdayWorkLimit)
@@ -117,7 +146,7 @@ function calculateLunchBreakOverlapMinutes(
 ) {
   if (rule.lunchBreakMinutes <= 0) return 0;
 
-  const lunchStart = toTimeOnDate(defaultLunchBreakStartTime, workDate);
+  const lunchStart = toTimeOnDate(rule.lunchBreakStartTime || defaultLunchBreakStartTime, workDate);
   const lunchEnd = addMinutes(lunchStart, rule.lunchBreakMinutes);
   const overlapStart = Math.max(effectiveStart.getTime(), lunchStart.getTime());
   const overlapEnd = Math.min(effectiveEnd.getTime(), lunchEnd.getTime());
@@ -142,6 +171,8 @@ export function buildAttendanceRecord(
 export function calculateMonthlyReport(
   records: AttendanceRecordView[],
   month: string,
+  rule: WorkRuleInput = defaultWorkRule,
+  overrideMap: Map<string, WorkDayOverrideKind> = new Map(),
 ): MonthlyReportView {
   const monthRecords = mergeRecordsByWorkDate(records)
     .filter((record) => format(record.workDate, "yyyy-MM") === month)
@@ -150,8 +181,12 @@ export function calculateMonthlyReport(
   const workableRecords = monthRecords.filter(
     (record) => !["ABSENT", "ABNORMAL", "REST_DAY", "HOLIDAY"].includes(record.status),
   );
-  const weekdayRecords = workableRecords.filter((record) => !isWeekendCalendarDay(record.workDate));
-  const weekendRecords = workableRecords.filter((record) => isWeekendCalendarDay(record.workDate));
+  const weekdayRecords = workableRecords.filter(
+    (record) => !isWeekendLikeDay(record.workDate, overrideMap),
+  );
+  const weekendRecords = workableRecords.filter((record) =>
+    isWeekendLikeDay(record.workDate, overrideMap),
+  );
   const overtimeValues = workableRecords.map((record) => record.overtimeMinutes);
   const weekdayOvertimeMinutes = weekdayRecords.reduce(
     (sum, record) => sum + record.overtimeMinutes,
@@ -174,7 +209,7 @@ export function calculateMonthlyReport(
       (sum, record) => sum + record.actualWorkMinutes,
       0,
     ),
-    standardWorkMinutes: workDays * 480,
+    standardWorkMinutes: workDays * rule.standardWorkMinutes,
     overtimeMinutes,
     averageOvertimeMinutes:
       weekdayRecords.length > 0 ? Math.round(weekdayOvertimeMinutes / weekdayRecords.length) : 0,
@@ -193,6 +228,7 @@ export function calculateMonthlyReport(
     dayTrend: groupByDay(monthRecords),
     weekTrend: groupByWeek(monthRecords),
     records: monthRecords,
+    appliedRule: toWorkRuleSnapshot(rule),
   };
 }
 

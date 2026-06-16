@@ -11,6 +11,7 @@ import {
 } from "./client";
 import { buildScreenshotImportPrompt } from "./prompts";
 import type { ImportPreview } from "@/types/import";
+import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
 
 export type ScreenshotImportFile = {
   fileName: string;
@@ -36,8 +37,9 @@ type AiRecord = z.infer<typeof aiRecordSchema>;
 
 export async function parseAttendanceScreenshots(
   files: ScreenshotImportFile[],
+  rule: WorkRuleInput = defaultWorkRule,
 ): Promise<ImportPreview> {
-  return parseAttendanceScreenshotBatches(files, parseAttendanceScreenshotChunk);
+  return parseAttendanceScreenshotBatches(files, (chunk) => parseAttendanceScreenshotChunk(chunk, rule));
 }
 
 export async function parseAttendanceScreenshotBatches(
@@ -56,10 +58,13 @@ export async function parseAttendanceScreenshotBatches(
   return mergeScreenshotImportPreviews(previews);
 }
 
-async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Promise<ImportPreview> {
+async function parseAttendanceScreenshotChunk(
+  files: ScreenshotImportFile[],
+  rule: WorkRuleInput = defaultWorkRule,
+): Promise<ImportPreview> {
   const text = await generateScreenshotImportText(files);
   const parsed = aiResultSchema.parse(parseJsonObject(text));
-  return buildScreenshotImportPreview(parsed.records);
+  return buildScreenshotImportPreview(parsed.records, rule);
 }
 
 async function generateScreenshotImportText(files: ScreenshotImportFile[]) {
@@ -197,16 +202,22 @@ function encodeScreenshotFileAsBase64(file: ScreenshotImportFile) {
   return Buffer.from(file.buffer).toString("base64");
 }
 
-export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview {
+export function buildScreenshotImportPreview(
+  records: AiRecord[],
+  rule: WorkRuleInput = defaultWorkRule,
+): ImportPreview {
   const rows = records.filter((row) => !isHeaderLikeRecord(row));
   const previewRows = rows.map((row, index) => {
-    const validation = validateAttendanceRow({
-      name: row.name ?? undefined,
-      date: row.date,
-      checkIn: row.checkIn ?? undefined,
-      checkOut: row.checkOut ?? undefined,
-      remark: row.remark ?? undefined,
-    });
+    const validation = validateAttendanceRow(
+      {
+        name: row.name ?? undefined,
+        date: row.date,
+        checkIn: row.checkIn ?? undefined,
+        checkOut: row.checkOut ?? undefined,
+        remark: row.remark ?? undefined,
+      },
+      rule,
+    );
 
     return {
       rowNumber: index + 1,
@@ -222,7 +233,7 @@ export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview
     };
   });
 
-  const normalizedRows = normalizePreviewRows(previewRows);
+  const normalizedRows = normalizePreviewRows(previewRows, rule);
 
   return {
     headers: ["date", "name", "checkIn", "checkOut", "remark"],
@@ -242,7 +253,7 @@ export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview
 
 type PreviewRow = ImportPreview["rows"][number];
 
-function normalizePreviewRows(rows: PreviewRow[]): PreviewRow[] {
+function normalizePreviewRows(rows: PreviewRow[], rule: WorkRuleInput): PreviewRow[] {
   const validRowsByDate = new Map<string, PreviewRow>();
   const passthroughRows: PreviewRow[] = [];
 
@@ -254,7 +265,7 @@ function normalizePreviewRows(rows: PreviewRow[]): PreviewRow[] {
 
     const dateKey = toDateKey(row.record.workDate);
     const existing = validRowsByDate.get(dateKey);
-    validRowsByDate.set(dateKey, existing ? mergeValidPreviewRows(existing, row) : row);
+    validRowsByDate.set(dateKey, existing ? mergeValidPreviewRows(existing, row, rule) : row);
   }
 
   return [...validRowsByDate.values(), ...passthroughRows].map((row, index) => ({
@@ -263,7 +274,7 @@ function normalizePreviewRows(rows: PreviewRow[]): PreviewRow[] {
   }));
 }
 
-function mergeValidPreviewRows(left: PreviewRow, right: PreviewRow): PreviewRow {
+function mergeValidPreviewRows(left: PreviewRow, right: PreviewRow, rule: WorkRuleInput): PreviewRow {
   const leftCheckIn = left.record?.checkInTime?.getTime();
   const rightCheckIn = right.record?.checkInTime?.getTime();
   const leftCheckOut = left.record?.checkOutTime?.getTime();
@@ -271,13 +282,16 @@ function mergeValidPreviewRows(left: PreviewRow, right: PreviewRow): PreviewRow 
   const checkIn = chooseTimeText(rawText(left.raw.checkIn), leftCheckIn, rawText(right.raw.checkIn), rightCheckIn, "earliest");
   const checkOut = chooseTimeText(rawText(left.raw.checkOut), leftCheckOut, rawText(right.raw.checkOut), rightCheckOut, "latest");
   const remark = [rawText(left.raw.remark), rawText(right.raw.remark)].filter(Boolean).join("；");
-  const validation = validateAttendanceRow({
-    name: rawText(left.raw.name) || rawText(right.raw.name) || undefined,
-    date: rawText(left.raw.date) || rawText(right.raw.date),
-    checkIn: checkIn || undefined,
-    checkOut: checkOut || undefined,
-    remark: remark || undefined,
-  });
+    const validation = validateAttendanceRow(
+      {
+        name: rawText(left.raw.name) || rawText(right.raw.name) || undefined,
+        date: rawText(left.raw.date) || rawText(right.raw.date),
+        checkIn: checkIn || undefined,
+        checkOut: checkOut || undefined,
+        remark: remark || undefined,
+      },
+      rule,
+    );
 
   return {
     rowNumber: left.rowNumber,

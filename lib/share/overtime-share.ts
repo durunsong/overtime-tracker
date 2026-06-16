@@ -1,10 +1,12 @@
 import { createSecureToken } from "@/lib/auth/password";
 import { AuthRequiredError, getCurrentUser } from "@/lib/auth/session";
-import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { getPrisma } from "@/lib/prisma";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
 import { getCurrentMonth } from "@/lib/date/month";
+import { defaultWorkRule } from "@/types/attendance";
+import { toWorkRuleSnapshot } from "@/lib/attendance/work-rule";
+import type { WorkRuleSnapshot } from "@/types/report";
 import type { AttendanceRecordView } from "@/types/attendance";
 import type { MonthlyReportView } from "@/types/report";
 
@@ -22,9 +24,10 @@ type PublicMonthlyReport = Omit<MonthlyReportView, "records"> & {
 };
 
 export type OvertimeSharePayload = {
-  version: 1;
+  version: 2;
   ownerName: string;
   createdAt: string;
+  appliedRule: WorkRuleSnapshot;
   report: PublicMonthlyReport;
 };
 
@@ -67,9 +70,10 @@ export function buildOvertimeSharePayload(
   options: { ownerName: string; createdAt?: Date },
 ): OvertimeSharePayload {
   return {
-    version: 1,
+    version: 2,
     ownerName: options.ownerName,
     createdAt: (options.createdAt ?? new Date()).toISOString(),
+    appliedRule: report.appliedRule ?? toWorkRuleSnapshot(defaultWorkRule),
     report: {
       ...report,
       records: report.records.map((record) => ({
@@ -92,7 +96,9 @@ export function buildOvertimeSharePayload(
   };
 }
 
-export function parseOvertimeSharePayload(payload: OvertimeSharePayload): ParsedOvertimeSharePayload {
+export function parseOvertimeSharePayload(
+  payload: OvertimeSharePayload | LegacyOvertimeSharePayload,
+): ParsedOvertimeSharePayload {
   const records = mergeRecordsByWorkDate(
     payload.report.records.map((record, index) => ({
       ...record,
@@ -103,14 +109,30 @@ export function parseOvertimeSharePayload(payload: OvertimeSharePayload): Parsed
       checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null,
     })),
   );
-  const report = generateMonthlyReport(records, payload.report.month);
+
+  const appliedRule =
+    "appliedRule" in payload && payload.appliedRule
+      ? payload.appliedRule
+      : toWorkRuleSnapshot(defaultWorkRule);
 
   return {
     ...payload,
+    version: 2,
     createdAt: new Date(payload.createdAt),
-    report,
+    report: {
+      ...payload.report,
+      records,
+      appliedRule,
+    },
   };
 }
+
+type LegacyOvertimeSharePayload = {
+  version: 1;
+  ownerName: string;
+  createdAt: string;
+  report: PublicMonthlyReport;
+};
 
 export async function createCurrentUserOvertimeShare(month = getCurrentMonth()) {
   const user = await getCurrentUser();
@@ -118,8 +140,7 @@ export async function createCurrentUserOvertimeShare(month = getCurrentMonth()) 
     throw new AuthRequiredError("请先登录后再分享加班数据");
   }
 
-  const records = await loadAttendanceRecords(month);
-  const report = generateMonthlyReport(records, month);
+  const { report } = await loadMonthlyReportContext(month);
   const payload = buildOvertimeSharePayload(report, { ownerName: user.name });
   const token = createSecureToken(24);
 
