@@ -10,13 +10,14 @@ import {
   CalendarClock,
   FileSpreadsheet,
   Gauge,
+  Github,
   KeyRound,
   LogOut,
   Settings2,
   Table2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { APP_VERSION } from "@/lib/app-meta";
+import { APP_VERSION, GITHUB_REPO_URL } from "@/lib/app-meta";
 import { Button } from "@/components/ui/button";
 import { ShareOvertimeButton } from "@/components/dashboard/share-overtime-button";
 import type { AuthUser } from "@/lib/auth/session";
@@ -99,9 +100,15 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
               aria-hidden={sidebarCollapsed}
               title={sidebarCollapsed ? "Overtime Tracker" : undefined}
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-950 ring-1 ring-cyan-200/30">
-                <Image src="/icon.svg" alt="" width={40} height={40} aria-hidden="true" priority />
-              </div>
+              <Image
+                src="/icon.svg"
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 shrink-0 rounded-lg"
+                aria-hidden="true"
+                priority
+              />
               <div className="min-w-0 overflow-hidden">
                 <p className="truncate whitespace-nowrap font-semibold text-white">Overtime Tracker</p>
                 <p className="truncate whitespace-nowrap text-xs text-slate-500">智能加班统计平台</p>
@@ -192,6 +199,11 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 <ShareOvertimeButton />
                 <Button asChild size="sm">
                   <Link href="/dashboard/reports">生成月报</Link>
+                </Button>
+                <Button asChild variant="ghost" size="icon" title="GitHub 源码">
+                  <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                    <Github className="h-4 w-4" />
+                  </a>
                 </Button>
                 <Button variant="ghost" size="icon" title="退出登录" onClick={logout}>
                   <LogOut className="h-4 w-4" />
