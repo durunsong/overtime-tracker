@@ -3,14 +3,19 @@ import { getPrisma } from "@/lib/prisma";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
 import { mergeRecordsByWorkDate, normalizeWorkDate } from "@/lib/attendance/records";
-import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
-import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
+import { toDateKey } from "@/lib/attendance/parser";
+import { loadDefaultWorkRuleForUser } from "@/lib/data/work-rule-repository";
+import { loadWorkDayOverrideMapForUser } from "@/lib/data/work-day-override-repository";
 import type {
   AttendanceRecordView,
   AttendanceSource,
   AttendanceStatus,
   AttendanceInput,
+  WorkRuleInput,
 } from "@/types/attendance";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
+
+export { loadDefaultWorkRuleForUser } from "@/lib/data/work-rule-repository";
 
 type DbAttendanceRecord = {
   id: string;
@@ -30,32 +35,36 @@ type DbAttendanceRecord = {
   remark: string | null;
 };
 
+type CalculationBundle = {
+  rule: WorkRuleInput;
+  overrideMap: Map<string, WorkDayOverrideKind>;
+};
+
 export async function getDefaultUserId() {
   return requireCurrentUserId();
 }
 
-export async function loadDefaultWorkRuleForUser(userId: string): Promise<WorkRuleInput> {
-  const prisma = getPrisma();
-  const rule = await prisma.workRule.findFirst({
-    where: { userId, isDefault: true },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  return rule ? applyCurrentWorkRuleDefaults(rule) : defaultWorkRule;
+async function loadCalculationBundle(userId: string, month?: string): Promise<CalculationBundle> {
+  const [rule, overrideMap] = await Promise.all([
+    loadDefaultWorkRuleForUser(userId),
+    loadWorkDayOverrideMapForUser(userId, month),
+  ]);
+  return { rule, overrideMap };
 }
 
 export async function loadAttendanceRecords(month?: string) {
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
-  const [records, rule] = await Promise.all([
+  const [{ rule, overrideMap }, records] = await Promise.all([
+    loadCalculationBundle(userId, month),
     prisma.attendanceRecord.findMany({
       where: { userId },
       orderBy: { workDate: "asc" },
     }),
-    loadDefaultWorkRuleForUser(userId),
   ]);
+
   const views = mergeRecordsByWorkDate(records.map(recordToView)).map((record) =>
-    recalculateLoadedRecord(record, rule),
+    recalculateLoadedRecord(record, rule, overrideMap),
   );
   return month ? views.filter((record) => format(record.workDate, "yyyy-MM") === month) : views;
 }
@@ -63,7 +72,12 @@ export async function loadAttendanceRecords(month?: string) {
 export async function createAttendanceRecord(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
   const normalizedInput = normalizeAttendanceInput(input);
-  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
+  const { rule, overrideMap } = await loadCalculationBundle(userId);
+  const calculation = calculateDailyAttendance(
+    normalizedInput,
+    rule,
+    buildDailyOptions(normalizedInput.workDate, overrideMap),
+  );
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.create({
     data: {
@@ -89,7 +103,12 @@ export async function createAttendanceRecord(input: AttendanceInput) {
 export async function upsertAttendanceRecordByDate(input: AttendanceInput) {
   const userId = await requireCurrentUserId();
   const normalizedInput = normalizeAttendanceInput(input);
-  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
+  const { rule, overrideMap } = await loadCalculationBundle(userId);
+  const calculation = calculateDailyAttendance(
+    normalizedInput,
+    rule,
+    buildDailyOptions(normalizedInput.workDate, overrideMap),
+  );
   const prisma = getPrisma();
   const record = await prisma.attendanceRecord.upsert({
     where: { userId_workDate: { userId, workDate: normalizedInput.workDate } },
@@ -131,7 +150,12 @@ export async function updateAttendanceRecord(id: string, input: AttendanceInput)
   const prisma = getPrisma();
   const userId = await requireCurrentUserId();
   const normalizedInput = normalizeAttendanceInput(input);
-  const calculation = calculateDailyAttendance(normalizedInput, await loadDefaultWorkRuleForUser(userId));
+  const { rule, overrideMap } = await loadCalculationBundle(userId);
+  const calculation = calculateDailyAttendance(
+    normalizedInput,
+    rule,
+    buildDailyOptions(normalizedInput.workDate, overrideMap),
+  );
   const record = await prisma.attendanceRecord.update({
     where: { id, userId },
     data: {
@@ -186,28 +210,37 @@ function normalizeAttendanceInput(input: AttendanceInput): AttendanceInput {
   };
 }
 
-function recalculateLoadedRecord(record: AttendanceRecordView, rule: WorkRuleInput): AttendanceRecordView {
-  if (
-    !record.checkInTime ||
-    !record.checkOutTime ||
-    record.status === "REST_DAY" ||
-    record.status === "HOLIDAY"
-  ) {
+function buildDailyOptions(workDate: Date, overrideMap: Map<string, WorkDayOverrideKind>) {
+  return {
+    dayKindOverride: overrideMap.get(toDateKey(workDate)) ?? null,
+  };
+}
+
+function recalculateLoadedRecord(
+  record: AttendanceRecordView,
+  rule: WorkRuleInput,
+  overrideMap: Map<string, WorkDayOverrideKind>,
+): AttendanceRecordView {
+  if (!record.checkInTime || !record.checkOutTime) {
     return record;
   }
 
+  const calculation = calculateDailyAttendance(
+    {
+      workDate: record.workDate,
+      checkInTime: record.checkInTime,
+      checkOutTime: record.checkOutTime,
+      rawCheckInText: record.rawCheckInText,
+      rawCheckOutText: record.rawCheckOutText,
+      remark: record.remark,
+    },
+    rule,
+    buildDailyOptions(record.workDate, overrideMap),
+  );
+
   return {
     ...record,
-    ...calculateDailyAttendance(
-      {
-        workDate: record.workDate,
-        checkInTime: record.checkInTime,
-        checkOutTime: record.checkOutTime,
-        rawCheckInText: record.rawCheckInText,
-        rawCheckOutText: record.rawCheckOutText,
-        remark: record.remark,
-      },
-      rule,
-    ),
+    ...calculation,
+    issues: calculation.issues,
   };
 }

@@ -1,6 +1,5 @@
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
-import { generateMonthlyReport } from "@/lib/reports/monthly";
-import { loadAttendanceRecords } from "@/lib/data/attendance-repository";
+import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentMonth } from "@/lib/date/month";
 
@@ -11,8 +10,7 @@ export default async function DashboardPage() {
   let report;
 
   try {
-    const records = await loadAttendanceRecords(month);
-    report = generateMonthlyReport(records, month);
+    ({ report } = await loadMonthlyReportContext(month));
   } catch (error) {
     return <DatabaseError error={error} />;
   }

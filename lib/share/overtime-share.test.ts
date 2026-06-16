@@ -6,6 +6,8 @@ import {
   sanitizeShareToken,
 } from "@/lib/share/overtime-share";
 import { toDateKey } from "@/lib/attendance/parser";
+import { defaultWorkRule } from "@/types/attendance";
+import { toWorkRuleSnapshot } from "@/lib/attendance/work-rule";
 import type { MonthlyReportView } from "@/types/report";
 
 const report: MonthlyReportView = {
@@ -45,6 +47,7 @@ const report: MonthlyReportView = {
       issues: [],
     },
   ],
+  appliedRule: toWorkRuleSnapshot(defaultWorkRule),
 };
 
 describe("overtime share payload", () => {
@@ -55,6 +58,8 @@ describe("overtime share payload", () => {
     });
 
     expect(payload.ownerName).toBe("张三");
+    expect(payload.version).toBe(2);
+    expect(payload.appliedRule.startTime).toBe(defaultWorkRule.startTime);
     expect(payload.report.overtimeMinutes).toBe(130);
     expect(payload.report.records[0]).not.toHaveProperty("userId");
     expect(payload.report.records[0]).not.toHaveProperty("id");
@@ -73,7 +78,7 @@ describe("overtime share payload", () => {
     expect(parsed.report.records[0].checkOutTime?.toISOString()).toBe("2026-05-27T20:30:00.000Z");
   });
 
-  it("deduplicates legacy public snapshots by calendar date and rebuilds report totals", () => {
+  it("deduplicates public snapshots by calendar date while preserving snapshot totals", () => {
     const payload = buildOvertimeSharePayload(
       {
         ...report,
@@ -112,8 +117,9 @@ describe("overtime share payload", () => {
       }),
     );
     expect(toDateKey(parsed.report.records[0]!.workDate)).toBe("2026-05-26");
-    expect(parsed.report.overtimeMinutes).toBe(211);
-    expect(parsed.report.dayTrend).toHaveLength(1);
+    expect(parsed.report.overtimeMinutes).toBe(130);
+    expect(parsed.report.records[0]?.overtimeMinutes).toBe(211);
+    expect(parsed.report.appliedRule?.startTime).toBe(defaultWorkRule.startTime);
   });
 
   it("rejects tokens outside the share URL alphabet", () => {

@@ -11,6 +11,67 @@ import {
 import { defaultWorkRule } from "@/types/attendance";
 
 describe("attendance calculation", () => {
+  it("respects per-user custom work hours and overtime thresholds", () => {
+    const customRule = {
+      ...defaultWorkRule,
+      startTime: "10:00",
+      endTime: "18:30",
+      standardWorkMinutes: 510,
+      overtimeStartTime: "18:30",
+      beforeStartNotCount: true,
+      lunchBreakEnabled: false,
+      weekendEnabled: false,
+    };
+    const workDate = new Date("2026-05-04T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("09:30", workDate),
+        checkOutTime: parseTime("19:00", workDate),
+      },
+      customRule,
+    );
+
+    expect(result.lateMinutes).toBe(0);
+    expect(result.actualWorkMinutes).toBe(540);
+    expect(result.overtimeMinutes).toBe(30);
+    expect(result.status).toBe("NORMAL");
+  });
+
+  it("uses configurable lunch break start time when deducting overlap", () => {
+    const workDate = new Date("2026-05-04T00:00:00");
+    const result = calculateDailyAttendance(
+      {
+        workDate,
+        checkInTime: parseTime("09:30", workDate),
+        checkOutTime: parseTime("19:00", workDate),
+      },
+      {
+        ...defaultWorkRule,
+        lunchBreakStartTime: "13:00",
+        lunchBreakMinutes: 60,
+        lunchBreakEnabled: true,
+      },
+    );
+
+    expect(result.actualWorkMinutes).toBe(510);
+    expect(result.overtimeMinutes).toBe(0);
+  });
+
+  it("calculates monthly standard minutes from the active rule", () => {
+    const weekday = buildAttendanceRecord("weekday", {
+      workDate: new Date("2026-05-04T00:00:00"),
+      checkInTime: parseTime("09:15", new Date("2026-05-04T00:00:00")),
+      checkOutTime: parseTime("19:07", new Date("2026-05-04T00:00:00")),
+    });
+    const report = calculateMonthlyReport([weekday], "2026-05", {
+      ...defaultWorkRule,
+      standardWorkMinutes: 510,
+    });
+
+    expect(report.standardWorkMinutes).toBe(510);
+  });
+
   it("does not count check-in time before 09:30 as extra work", () => {
     const workDate = new Date("2026-05-04T00:00:00");
     const result = calculateDailyAttendance({
@@ -179,7 +240,7 @@ describe("attendance calculation", () => {
       checkOutTime: parseTime("19:43", new Date("2026-05-30T00:00:00")),
     });
 
-    const report = calculateMonthlyReport([weekday, weekend], "2026-05");
+    const report = calculateMonthlyReport([weekday, weekend], "2026-05", defaultWorkRule);
 
     expect(report.weekdayWorkDays).toBe(1);
     expect(report.weekendWorkDays).toBe(1);
@@ -206,7 +267,7 @@ describe("attendance calculation", () => {
         checkOutTime: null,
       }),
     ];
-    const report = calculateMonthlyReport(records, "2026-05");
+    const report = calculateMonthlyReport(records, "2026-05", defaultWorkRule);
     expect(report.workDays).toBeGreaterThan(0);
     expect(report.overtimeMinutes).toBeGreaterThan(0);
     expect(report.dayTrend.length).toBe(3);

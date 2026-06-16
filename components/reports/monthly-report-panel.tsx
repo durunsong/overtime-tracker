@@ -8,16 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { DailyOvertimeBar } from "@/components/charts/overtime-charts";
 import { AiThinking, MarkdownAnswer } from "@/components/ai/ai-assistant";
-import type { AttendanceRecordView } from "@/types/attendance";
+import type { AttendanceRecordView, WorkRuleInput } from "@/types/attendance";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
 import { generateMonthlyReport, buildReportText } from "@/lib/reports/monthly";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { getCurrentMonth } from "@/lib/date/month";
 
-export function MonthlyReportPanel({ records }: { records: AttendanceRecordView[] }) {
+export function MonthlyReportPanel({
+  records,
+  rule,
+  overrideMap = new Map<string, WorkDayOverrideKind>(),
+}: {
+  records: AttendanceRecordView[];
+  rule: WorkRuleInput;
+  overrideMap?: Map<string, WorkDayOverrideKind>;
+}) {
   const [month, setMonth] = useState(() => getCurrentMonth());
   const [aiSummary, setAiSummary] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const report = useMemo(() => generateMonthlyReport(records, month), [month, records]);
+  const report = useMemo(
+    () => generateMonthlyReport(records, month, rule, overrideMap),
+    [month, overrideMap, records, rule],
+  );
 
   async function generateAiSummary() {
     setAiLoading(true);

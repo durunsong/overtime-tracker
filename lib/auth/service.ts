@@ -7,6 +7,7 @@ import {
   verifyPassword,
 } from "@/lib/auth/password";
 import { createUserSession } from "@/lib/auth/session";
+import { ensureDefaultWorkRuleForUser } from "@/lib/data/work-rule-repository";
 
 const resetTokenMinutes = 30;
 
@@ -51,6 +52,8 @@ export async function registerUser(input: { name: string; email: string; passwor
         select: { id: true, name: true, email: true, avatar: true },
       });
 
+  await ensureDefaultWorkRuleForUser(user.id);
+
   return withSession(user);
 }
 
@@ -64,6 +67,8 @@ export async function loginUser(input: { email: string; password: string }) {
   if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
     throw new Error("邮箱或密码不正确");
   }
+
+  await ensureDefaultWorkRuleForUser(user.id);
 
   return withSession({
     id: user.id,

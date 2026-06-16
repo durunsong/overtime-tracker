@@ -1,5 +1,22 @@
 import type { AttendanceRecordView } from "./attendance";
 
+import type { WorkRuleInput } from "./attendance";
+
+export type WorkRuleSnapshot = Pick<
+  WorkRuleInput,
+  | "name"
+  | "startTime"
+  | "endTime"
+  | "standardWorkMinutes"
+  | "overtimeStartTime"
+  | "beforeStartNotCount"
+  | "lunchBreakStartTime"
+  | "lunchBreakEnabled"
+  | "lunchBreakMinutes"
+  | "weekendEnabled"
+  | "holidayEnabled"
+>;
+
 export type TrendPoint = {
   label: string;
   workMinutes: number;
@@ -26,5 +43,6 @@ export type MonthlyReportView = {
   dayTrend: TrendPoint[];
   weekTrend: TrendPoint[];
   records: AttendanceRecordView[];
+  appliedRule?: WorkRuleSnapshot;
   aiSummary?: string;
 };

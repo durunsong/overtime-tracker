@@ -1,5 +1,6 @@
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
+import { formatWorkRuleSummary } from "@/lib/attendance/work-rule";
 import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 
 export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
@@ -9,6 +10,7 @@ export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
 你是专业的考勤与工作投入分析助手。只能基于以下真实统计数据生成总结，不能编造不存在的日期、时长或原因。
 如果数据不足，请直接说明数据不足。
 
+${report.appliedRule ? `当前统计口径：\n${formatWorkRuleSummary(report.appliedRule)}\n` : ""}
 月份：${report.month}
 出勤天数：${report.workDays}
 总有效出勤：${formatMinutes(report.actualWorkMinutes)}

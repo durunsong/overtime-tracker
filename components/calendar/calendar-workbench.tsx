@@ -12,10 +12,17 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import type { CalendarDay, CalendarMonth, ChinaDayKind } from "@/types/calendar";
+import type { WorkDayOverrideKind } from "@/lib/calendar/day-kind";
 
 const weekdayLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 const quickCheckOutTimes = ["19:30", "20:00", "21:00", "22:00", "23:59"];
 
+const overrideOptions: Array<{ value: WorkDayOverrideKind | ""; label: string }> = [
+  { value: "", label: "跟随系统日历" },
+  { value: "FORCE_WORKDAY", label: "强制按工作日计算" },
+  { value: "FORCE_REST", label: "强制休息日" },
+  { value: "FORCE_HOLIDAY", label: "强制节假日口径" },
+];
 const kindLabel: Record<ChinaDayKind, string> = {
   WORKDAY: "工作日",
   WEEKEND: "周末",
@@ -34,6 +41,7 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
   const [checkInTime, setCheckInTime] = useState("");
   const [checkOutTime, setCheckOutTime] = useState("");
   const [remark, setRemark] = useState("");
+  const [dayOverride, setDayOverride] = useState<WorkDayOverrideKind | "">("");
   const [loading, setLoading] = useState(false);
 
   const selectedDay = useMemo(
@@ -53,6 +61,7 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
     setCheckInTime(day.record?.rawCheckInText ?? "");
     setCheckOutTime(day.record?.rawCheckOutText ?? "");
     setRemark(day.record?.remark ?? "");
+    setDayOverride(day.personalOverrideKind ?? "");
   }
 
   async function loadMonth(nextMonth: string) {
@@ -67,15 +76,40 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
     }
 
     setMonth(nextMonth);
-    setCalendar(result.data);
+    setCalendar(result.data.calendar);
     const nextSelected =
-      result.data.days.find((day: CalendarDay) => day.isToday)?.date ??
-      result.data.days.find((day: CalendarDay) => day.isCurrentMonth)?.date;
+      result.data.calendar.days.find((day: CalendarDay) => day.isToday)?.date ??
+      result.data.calendar.days.find((day: CalendarDay) => day.isCurrentMonth)?.date;
     setSelectedDate(nextSelected);
-    const day = result.data.days.find((item: CalendarDay) => item.date === nextSelected);
+    const day = result.data.calendar.days.find((item: CalendarDay) => item.date === nextSelected);
     setCheckInTime(day?.record?.rawCheckInText ?? "");
     setCheckOutTime(day?.record?.rawCheckOutText ?? "");
     setRemark(day?.record?.remark ?? "");
+    setDayOverride(day?.personalOverrideKind ?? "");
+  }
+
+  async function saveDayOverride() {
+    if (!selectedDay) return;
+
+    setLoading(true);
+    const response = await fetch("/api/calendar", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: selectedDay.date,
+        kind: dayOverride || null,
+      }),
+    });
+    const result = await response.json();
+    setLoading(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "更新日期口径失败");
+      return;
+    }
+
+    toast.success(result.message ?? "日期口径已更新");
+    setCalendar(result.data);
   }
 
   async function saveDay() {
@@ -220,6 +254,30 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
                   <Badge tone="emerald">{selectedDay.wageRate} 倍工资日</Badge>
                 ) : null}
               </div>
+
+              <label className="space-y-2 text-sm text-slate-300">
+                个人日期口径
+                <select
+                  className="w-full rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                  value={dayOverride}
+                  onChange={(event) =>
+                    setDayOverride(event.target.value as WorkDayOverrideKind | "")
+                  }
+                >
+                  {overrideOptions.map((option) => (
+                    <option key={option.label} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="block text-xs leading-5 text-slate-500">
+                  覆盖中国日历默认判断，例如个人请假、调休或公司特殊安排。
+                </span>
+              </label>
+
+              <Button variant="secondary" className="w-full" onClick={saveDayOverride} disabled={loading}>
+                保存日期口径
+              </Button>
 
               <label className="space-y-2 text-sm text-slate-300">
                 上班打卡

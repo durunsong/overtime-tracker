@@ -1,8 +1,11 @@
-import { defaultWorkRule } from "@/types/attendance";
-import { applyCurrentWorkRuleDefaults } from "@/lib/attendance/work-rule";
+import { applyCurrentWorkRuleDefaults, validateWorkRuleInput } from "@/lib/attendance/work-rule";
 import { workRuleSchema } from "@/lib/attendance/validators";
 import { requireCurrentUserId } from "@/lib/auth/session";
-import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
+import {
+  ensureDefaultWorkRuleForUser,
+  saveDefaultWorkRuleForUser,
+} from "@/lib/data/work-rule-repository";
+import { isDatabaseConfigured } from "@/lib/prisma";
 import { jsonResponse } from "@/lib/utils";
 
 export async function GET() {
@@ -14,15 +17,8 @@ export async function GET() {
       );
     }
 
-    const prisma = getPrisma();
     const userId = await requireCurrentUserId();
-    const existingRule = await prisma.workRule.findFirst({
-      where: { userId, isDefault: true },
-      orderBy: { updatedAt: "desc" },
-    });
-    const rule = existingRule
-      ? applyCurrentWorkRuleDefaults(existingRule)
-      : await prisma.workRule.create({ data: { ...defaultWorkRule, userId } });
+    const rule = await ensureDefaultWorkRuleForUser(userId);
     return jsonResponse({ success: true, data: rule });
   } catch (error) {
     return jsonResponse(
@@ -35,6 +31,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const parsed = workRuleSchema.parse(await request.json());
+    const normalized = applyCurrentWorkRuleDefaults(parsed);
+    const validationErrors = validateWorkRuleInput(normalized);
+    if (validationErrors.length > 0) {
+      return jsonResponse({ success: false, error: validationErrors.join("；") }, { status: 400 });
+    }
 
     if (!isDatabaseConfigured()) {
       return jsonResponse(
@@ -43,18 +44,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const prisma = getPrisma();
     const userId = await requireCurrentUserId();
-    await prisma.workRule.updateMany({ where: { userId }, data: { isDefault: false } });
-    const rule = await prisma.workRule.create({
-      data: {
-        ...parsed,
-        userId,
-        isDefault: true,
-      },
-    });
+    const rule = await saveDefaultWorkRuleForUser(userId, normalized);
 
-    return jsonResponse({ success: true, data: rule });
+    return jsonResponse({
+      success: true,
+      data: rule,
+      message: "规则已保存，历史打卡记录已按新规则重新计算",
+    });
   } catch (error) {
     return jsonResponse(
       { success: false, error: error instanceof Error ? error.message : "保存工作规则失败" },
