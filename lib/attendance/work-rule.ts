@@ -1,7 +1,7 @@
 import { defaultWorkRule, type WorkRuleInput } from "@/types/attendance";
 import type { WorkRuleSnapshot } from "@/types/report";
 
-type WorkRuleLike = Partial<WorkRuleInput> & {
+type WorkRuleLike = {
   name: string;
   startTime: string;
   endTime: string;

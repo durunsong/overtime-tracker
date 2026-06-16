@@ -116,9 +116,10 @@ export function parseOvertimeSharePayload(
       : toWorkRuleSnapshot(defaultWorkRule);
 
   return {
-    ...payload,
     version: 2,
+    ownerName: payload.ownerName,
     createdAt: new Date(payload.createdAt),
+    appliedRule,
     report: {
       ...payload.report,
       records,
