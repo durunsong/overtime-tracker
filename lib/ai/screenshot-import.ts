@@ -2,7 +2,13 @@ import { generateText } from "ai";
 import { z } from "zod";
 import { toDateKey } from "@/lib/attendance/parser";
 import { validateAttendanceRow } from "@/lib/attendance/validators";
-import { getAiLanguageModel } from "./client";
+import {
+  getAiLanguageModel,
+  getAiProviderConfig,
+  isZhipuCompatibleConfig,
+  resolveChatCompletionsUrl,
+  type AiProviderConfig,
+} from "./client";
 import { buildScreenshotImportPrompt } from "./prompts";
 import type { ImportPreview } from "@/types/import";
 
@@ -51,8 +57,20 @@ export async function parseAttendanceScreenshotBatches(
 }
 
 async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Promise<ImportPreview> {
+  const text = await generateScreenshotImportText(files);
+  const parsed = aiResultSchema.parse(parseJsonObject(text));
+  return buildScreenshotImportPreview(parsed.records);
+}
+
+async function generateScreenshotImportText(files: ScreenshotImportFile[]) {
+  const config = getAiProviderConfig();
+
+  if (isZhipuCompatibleConfig(config)) {
+    return generateZhipuScreenshotImportText(config, files);
+  }
+
   const result = await generateText({
-    model: getAiLanguageModel(),
+    model: getAiLanguageModel(config),
     messages: [
       {
         role: "user",
@@ -69,8 +87,49 @@ async function parseAttendanceScreenshotChunk(files: ScreenshotImportFile[]): Pr
     temperature: 0,
   });
 
-  const parsed = aiResultSchema.parse(parseJsonObject(result.text));
-  return buildScreenshotImportPreview(parsed.records);
+  return result.text;
+}
+
+async function generateZhipuScreenshotImportText(config: AiProviderConfig, files: ScreenshotImportFile[]) {
+  const response = await fetch(resolveChatCompletionsUrl(config.baseURL), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: buildZhipuScreenshotMessages(files),
+      temperature: 0,
+    }),
+  });
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(getZhipuErrorMessage(responseText, response.status));
+  }
+
+  return getZhipuCompletionText(responseText);
+}
+
+export function buildZhipuScreenshotMessages(files: ScreenshotImportFile[]) {
+  return [
+    {
+      role: "user" as const,
+      content: [
+        ...files.map((file) => ({
+          type: "image_url" as const,
+          image_url: {
+            url: encodeScreenshotFileAsBase64(file),
+          },
+        })),
+        {
+          type: "text" as const,
+          text: buildScreenshotImportPrompt(files.map((file) => file.fileName)),
+        },
+      ],
+    },
+  ];
 }
 
 export function chunkScreenshotImportFiles(files: ScreenshotImportFile[]) {
@@ -132,6 +191,10 @@ function buildFailedScreenshotChunkPreview(files: ScreenshotImportFile[], messag
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "当前批次处理失败";
+}
+
+function encodeScreenshotFileAsBase64(file: ScreenshotImportFile) {
+  return Buffer.from(file.buffer).toString("base64");
 }
 
 export function buildScreenshotImportPreview(records: AiRecord[]): ImportPreview {
@@ -286,4 +349,61 @@ function parseJsonObject(text: string) {
   }
 
   return JSON.parse(candidate.slice(start, end + 1)) as unknown;
+}
+
+type ZhipuTextContentPart = {
+  type?: string;
+  text?: string;
+};
+
+type ZhipuChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | ZhipuTextContentPart[];
+    };
+  }>;
+  error?: {
+    message?: string;
+  };
+  message?: string;
+};
+
+function getZhipuCompletionText(responseText: string) {
+  const payload = parseZhipuJson(responseText);
+  const content = payload.choices?.[0]?.message?.content;
+
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    const text = content.map((part) => part.text ?? "").join("");
+    if (text) {
+      return text;
+    }
+  }
+
+  throw new Error("AI 未返回可解析的文本结果");
+}
+
+function getZhipuErrorMessage(responseText: string, status: number) {
+  const payload = parseZhipuJson(responseText, false);
+  const message = payload?.error?.message ?? payload?.message ?? responseText;
+
+  if (message.includes("['text']") || message.includes("取值范围 ['text']")) {
+    return "当前智谱模型只接受文本，截图导入需要配置视觉模型（如 glm-4.5v、glm-4v-plus 或 glm-5v-turbo）";
+  }
+
+  return message || `智谱接口请求失败（HTTP ${status}）`;
+}
+
+function parseZhipuJson(responseText: string): ZhipuChatCompletionResponse;
+function parseZhipuJson(responseText: string, strict: false): ZhipuChatCompletionResponse | null;
+function parseZhipuJson(responseText: string, strict = true) {
+  try {
+    return JSON.parse(responseText) as ZhipuChatCompletionResponse;
+  } catch {
+    if (!strict) return null;
+    throw new Error("AI 返回内容不是有效 JSON");
+  }
 }

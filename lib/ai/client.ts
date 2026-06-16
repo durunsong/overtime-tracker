@@ -29,9 +29,7 @@ export function getAiProviderConfig(): AiProviderConfig {
   };
 }
 
-export function getAiLanguageModel() {
-  const config = getAiProviderConfig();
-
+export function getAiLanguageModel(config = getAiProviderConfig()) {
   const provider = createOpenAI({
     apiKey: config.apiKey,
     baseURL: config.baseURL,
@@ -65,4 +63,34 @@ export function streamAiText(
 function readEnv(name: string) {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
+}
+
+export function isZhipuCompatibleConfig(config: Pick<AiProviderConfig, "provider" | "baseURL">) {
+  const provider = config.provider.toLowerCase();
+  const baseURL = config.baseURL.toLowerCase();
+
+  return (
+    provider.includes("zhipu") ||
+    provider.includes("bigmodel") ||
+    provider.includes("z.ai") ||
+    baseURL.includes("bigmodel.cn") ||
+    baseURL.includes("z.ai")
+  );
+}
+
+export function resolveChatCompletionsUrl(baseURL: string) {
+  const url = new URL(baseURL);
+  const pathname = url.pathname.replace(/\/+$/, "");
+
+  if (pathname.endsWith("/chat/completions")) {
+    return url.toString();
+  }
+
+  if ((url.hostname.includes("bigmodel.cn") || url.hostname.includes("z.ai")) && pathname === "") {
+    url.pathname = "/api/paas/v4/chat/completions";
+    return url.toString();
+  }
+
+  url.pathname = `${pathname}/chat/completions`;
+  return url.toString();
 }

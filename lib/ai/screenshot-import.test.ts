@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildZhipuScreenshotMessages,
   buildScreenshotImportPreview,
   chunkScreenshotImportFiles,
   mergeScreenshotImportPreviews,
@@ -62,6 +63,28 @@ describe("chunkScreenshotImportFiles", () => {
       ["shot-7.png", "shot-8.png", "shot-9.png"],
       ["shot-10.png"],
     ]);
+  });
+});
+
+describe("buildZhipuScreenshotMessages", () => {
+  it("uses the image_url content type required by Zhipu vision models", () => {
+    const messages = buildZhipuScreenshotMessages([
+      {
+        fileName: "image.png",
+        mimeType: "image/png",
+        buffer: new Uint8Array([137, 80, 78, 71]).buffer,
+      },
+    ]);
+
+    expect(messages[0]?.role).toBe("user");
+    expect(messages[0]?.content[0]).toEqual({
+      type: "image_url",
+      image_url: { url: "iVBORw==" },
+    });
+    expect(messages[0]?.content[1]?.type).toBe("text");
+    expect(messages[0]?.content[1]).toMatchObject({
+      text: expect.stringContaining("image.png"),
+    });
   });
 });
 

@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getAiLanguageModel, getAiProviderConfig, isAiConfigured } from "./client";
+import {
+  getAiLanguageModel,
+  getAiProviderConfig,
+  isAiConfigured,
+  isZhipuCompatibleConfig,
+  resolveChatCompletionsUrl,
+} from "./client";
 
 const originalEnv = { ...process.env };
 
@@ -54,5 +60,38 @@ describe("AI provider config", () => {
     process.env.AI_MODEL = "deepseek-v4-flash";
 
     expect(getAiLanguageModel().provider).toBe("openai.chat");
+  });
+
+  it("detects Zhipu/BigModel compatible endpoints for native vision requests", () => {
+    expect(
+      isZhipuCompatibleConfig({
+        provider: "bigmodel",
+        baseURL: "https://open.bigmodel.cn/api/paas/v4",
+      }),
+    ).toBe(true);
+    expect(
+      isZhipuCompatibleConfig({
+        provider: "openai-compatible",
+        baseURL: "https://open.bigmodel.cn/api/paas/v4",
+      }),
+    ).toBe(true);
+    expect(
+      isZhipuCompatibleConfig({
+        provider: "deepseek",
+        baseURL: "https://api.deepseek.com",
+      }),
+    ).toBe(false);
+  });
+
+  it("resolves chat completion endpoints without duplicating path segments", () => {
+    expect(resolveChatCompletionsUrl("https://open.bigmodel.cn")).toBe(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    );
+    expect(resolveChatCompletionsUrl("https://open.bigmodel.cn/api/paas/v4")).toBe(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    );
+    expect(resolveChatCompletionsUrl("https://open.bigmodel.cn/api/paas/v4/chat/completions")).toBe(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    );
   });
 });
