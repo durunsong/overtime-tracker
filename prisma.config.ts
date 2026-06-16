@@ -1,9 +1,10 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-// prisma generate 不连接数据库，但 Prisma 7 仍会加载 config。
-// CI/Vercel 构建阶段可能尚未注入 DATABASE_URL，此处用占位 URL 仅用于生成 Client。
-const buildTimeDatabaseUrl =
+// prisma generate / migrate 会加载 config。generate 不连库；migrate deploy 需要真实连接串。
+// Neon 迁移优先用 DIRECT_URL，运行时 Prisma Client 仍走 lib/prisma.ts 的 DATABASE_URL（pooled）。
+const cliDatabaseUrl =
+  process.env.DIRECT_URL ??
   process.env.DATABASE_URL ??
   "postgresql://postgres:postgres@127.0.0.1:5432/overtime_tracker_build?schema=public";
 
@@ -14,6 +15,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: buildTimeDatabaseUrl,
+    url: cliDatabaseUrl,
   },
 });
