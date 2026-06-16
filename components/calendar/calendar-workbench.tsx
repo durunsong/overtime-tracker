@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/ui/month-picker";
+import { Select } from "@/components/ui/select";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMinutes } from "@/lib/attendance/formatter";
@@ -257,19 +258,15 @@ export function CalendarWorkbench({ initialCalendar }: { initialCalendar: Calend
 
               <label className="space-y-2 text-sm text-slate-300">
                 个人日期口径
-                <select
-                  className="w-full rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-100"
+                <Select
+                  aria-label="选择个人日期口径"
                   value={dayOverride}
-                  onChange={(event) =>
-                    setDayOverride(event.target.value as WorkDayOverrideKind | "")
-                  }
-                >
-                  {overrideOptions.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setDayOverride(value as WorkDayOverrideKind | "")}
+                  options={overrideOptions.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                />
                 <span className="block text-xs leading-5 text-slate-500">
                   覆盖中国日历默认判断，例如个人请假、调休或公司特殊安排。
                 </span>
