@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 echo "==> Overtime Tracker bootstrap"
 
 if ! command -v corepack >/dev/null 2>&1; then
-  echo "请先安装 Node.js 20+（包含 Corepack）。"
+  echo "请先安装 Node.js 22+（包含 Corepack）。"
   exit 1
 fi
 

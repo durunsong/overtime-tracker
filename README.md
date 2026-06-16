@@ -19,7 +19,7 @@
 
 ## 快速开始
 
-环境要求：Node.js 20+、pnpm 10+、PostgreSQL（本地或 [Neon](https://neon.tech/)）。
+环境要求：Node.js 22+、pnpm 10+、PostgreSQL（本地或 [Neon](https://neon.tech/)）。
 
 ```bash
 git clone https://github.com/durunsong/overtime-tracker.git
@@ -59,7 +59,7 @@ pnpm dev
 
 ## 环境要求
 
-- Node.js 20+
+- Node.js 22+
 - [pnpm](https://pnpm.io/installation) 10+
 
 启用 Corepack 后可直接使用项目锁定的 pnpm 版本：
