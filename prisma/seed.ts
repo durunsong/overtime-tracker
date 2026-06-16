@@ -1,14 +1,17 @@
 import { getPrisma } from "@/lib/prisma";
 import { defaultWorkRule } from "@/types/attendance";
 
+const demoUserEmail = process.env.SEED_DEMO_EMAIL?.trim() || "demo@example.com";
+const demoUserName = process.env.SEED_DEMO_NAME?.trim() || "Demo User";
+
 async function main() {
   const prisma = getPrisma();
   const user = await prisma.user.upsert({
-    where: { email: "durunsongs@gmail.com" },
-    update: { name: "Durun Songs" },
+    where: { email: demoUserEmail },
+    update: { name: demoUserName },
     create: {
-      name: "Durun Songs",
-      email: "durunsongs@gmail.com",
+      name: demoUserName,
+      email: demoUserEmail,
       avatar: "https://api.dicebear.com/9.x/initials/svg?seed=OT",
     },
   });

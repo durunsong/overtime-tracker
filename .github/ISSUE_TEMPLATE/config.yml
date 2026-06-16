@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 贡献指南
+    url: https://github.com/durunsong/overtime-tracker/blob/main/CONTRIBUTING.md
+    about: 了解本地开发、验证命令与 PR 约定
+  - name: 安全漏洞私下报告
+    url: https://github.com/durunsong/overtime-tracker/security/advisories/new
+    about: 请勿公开 Issue 报告安全问题

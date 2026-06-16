@@ -41,6 +41,7 @@
 - AI 使用 Vercel AI SDK（`ai`、`@ai-sdk/openai`）接入 OpenAI 兼容接口；Provider 与模型通过环境变量配置，不限定单一厂商。截图导入对智谱等部分端点有额外适配。
 - 测试使用 Vitest，Lint 使用 ESLint（`eslint-config-next`）。
 - 包管理器统一使用 **pnpm**；不要使用 `npm install` / `yarn install`，锁文件以 `pnpm-lock.yaml` 为准。
+- 本项目已开源（MIT）。对外文档以 `README.md`、`LICENSE`、`CONTRIBUTING.md`、`SECURITY.md` 为准；不要提交 `.env` 或真实密钥。
 - 不主动新增依赖。确需新增时，先说明用途、影响和替代方案。
 
 ## 目录与分层

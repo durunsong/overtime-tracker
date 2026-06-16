@@ -1,7 +1,28 @@
 {
   "name": "overtime-tracker",
   "version": "1.0.13",
-  "private": true,
+  "description": "智能加班统计、考勤分析与 AI 月报生成平台（Next.js + Prisma + PostgreSQL）",
+  "license": "MIT",
+  "author": "Durun Song <https://github.com/durunsong>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/durunsong/overtime-tracker.git"
+  },
+  "homepage": "https://github.com/durunsong/overtime-tracker#readme",
+  "bugs": {
+    "url": "https://github.com/durunsong/overtime-tracker/issues"
+  },
+  "keywords": [
+    "overtime",
+    "attendance",
+    "timesheet",
+    "nextjs",
+    "prisma",
+    "postgresql",
+    "ai",
+    "china-holiday",
+    "workforce-analytics"
+  ],
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=20",

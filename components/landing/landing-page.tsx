@@ -5,8 +5,11 @@ import { FormEvent, useCallback, useEffect, useRef } from "react";
 import { ArrowRight, BarChart3, Bot, Clock3, FileSpreadsheet, LayoutDashboard } from "lucide-react";
 import type { AuthUser } from "@/lib/auth/session";
 
-const VIDEO_SOURCE =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4";
+export function resolveLandingVideoUrl(value?: string) {
+  return value?.trim() ?? "";
+}
+
+const landingVideoUrl = resolveLandingVideoUrl(process.env.NEXT_PUBLIC_LANDING_VIDEO_URL);
 
 const FADE_DURATION = 500;
 const LOOP_RESTART_DELAY = 100;
@@ -71,6 +74,7 @@ export function getLandingSessionCopy(user: AuthUser | null) {
 
 export function LandingPage({ user = null }: { user?: AuthUser | null }) {
   const sessionCopy = getLandingSessionCopy(user);
+  const hasLandingVideo = landingVideoUrl.length > 0;
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
   const opacityRef = useRef(0);
@@ -179,18 +183,25 @@ export function LandingPage({ user = null }: { user?: AuthUser | null }) {
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden bg-black text-white">
-      <video
-        ref={videoRef}
-        className="absolute inset-0 h-full w-full translate-y-[17%] object-cover opacity-0"
-        src={VIDEO_SOURCE}
-        muted
-        autoPlay
-        playsInline
-        preload="auto"
-        onLoadedData={handleLoadedData}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={replayVideo}
-      />
+      {hasLandingVideo ? (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full translate-y-[17%] object-cover opacity-0"
+          src={landingVideoUrl}
+          muted
+          autoPlay
+          playsInline
+          preload="auto"
+          onLoadedData={handleLoadedData}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={replayVideo}
+        />
+      ) : (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.18),transparent_42%),radial-gradient(circle_at_80%_10%,rgba(59,130,246,0.16),transparent_38%),linear-gradient(180deg,#020617_0%,#000000_100%)]"
+        />
+      )}
 
       <div className="absolute inset-0 bg-black/45" />
       <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/80 to-transparent" />

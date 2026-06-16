@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { getLandingSessionCopy, LANDING_COPY } from "./landing-page";
+import { getLandingSessionCopy, LANDING_COPY, resolveLandingVideoUrl } from "./landing-page";
+
+describe("resolveLandingVideoUrl", () => {
+  it("returns empty string when video url is missing", () => {
+    expect(resolveLandingVideoUrl(undefined)).toBe("");
+    expect(resolveLandingVideoUrl("   ")).toBe("");
+  });
+
+  it("trims configured video url", () => {
+    expect(resolveLandingVideoUrl(" https://example.com/demo.mp4 ")).toBe("https://example.com/demo.mp4");
+  });
+});
 
 describe("LANDING_COPY", () => {
   it("uses overtime tracker product copy instead of generic template text", () => {

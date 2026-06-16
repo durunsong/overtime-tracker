@@ -1,0 +1,44 @@
+name: Bug Report
+description: 报告可复现的缺陷
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先搜索是否已有相同 Issue。请勿在 Issue 中粘贴密钥、数据库连接串或真实考勤数据。
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 简要说明发生了什么，以及期望行为。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动 `pnpm dev`
+        2. 打开 `/dashboard/import`
+        3. 上传示例 Excel
+        4. 看到错误提示
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      placeholder: |
+        - OS: Windows 11 / macOS / Linux
+        - Node: 20.x
+        - pnpm: 10.33.0
+        - Browser: Chrome 136
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 截图
+      description: 如有浏览器控制台、终端输出或截图，请附上。

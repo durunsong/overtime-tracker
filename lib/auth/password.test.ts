@@ -9,7 +9,7 @@ import { evaluatePasswordStrength, isPasswordPolicySatisfied } from "@/lib/auth/
 
 describe("auth password utilities", () => {
   it("normalizes emails before account lookup", () => {
-    expect(normalizeEmail("  DurunSongs@Gmail.COM ")).toBe("durunsongs@gmail.com");
+    expect(normalizeEmail("  Demo.User@Example.COM ")).toBe("demo.user@example.com");
   });
 
   it("hashes passwords without storing plaintext and verifies the correct secret", async () => {

@@ -1,6 +1,40 @@
 # Overtime Tracker
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![pnpm](https://img.shields.io/badge/pnpm-10.33.0-f69220?logo=pnpm&logoColor=white)](./package.json)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![CI](https://github.com/durunsong/overtime-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/durunsong/overtime-tracker/actions/workflows/ci.yml)
+
 智能加班统计、考勤分析与 AI 月报生成平台。基于 Next.js App Router 构建，支持 Excel / 截图导入、中国节假日-aware 加班计算、Dashboard 图表分析、月报导出、公开分享和 AI 智能总结。
+
+> **English:** A self-hostable overtime & attendance analytics app for Chinese work calendars — import Excel or screenshots, compute overtime with holiday/adjusted-workday rules, visualize trends, export reports, and optionally summarize with OpenAI-compatible AI.
+
+## 亮点
+
+- 面向个人/小团队的考勤分析，而不是简单 CRUD 后台
+- 中国节假日、调休补班 aware 的加班计算
+- Excel 与截图 OCR 双通道导入
+- Dashboard 统计、月历补录、规则配置、公开分享
+- AI 月报总结与基于真实数据的问答（OpenAI 兼容接口）
+
+## 快速开始
+
+环境要求：Node.js 20+、pnpm 10+、PostgreSQL（本地或 [Neon](https://neon.tech/)）。
+
+```bash
+git clone https://github.com/durunsong/overtime-tracker.git
+cd overtime-tracker
+bash setup.sh
+```
+
+然后编辑 `.env`，执行迁移并启动：
+
+```bash
+pnpm prisma:migrate
+pnpm dev
+```
+
+浏览器访问 `http://localhost:3000`。
 
 ## 功能概览
 
@@ -44,6 +78,7 @@ DATABASE_URL="你的 Neon pooled connection string"
 DIRECT_URL="你的 Neon direct connection string"
 NEXT_PUBLIC_APP_NAME="Overtime Tracker"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_LANDING_VIDEO_URL=""
 AI_PROVIDER="openai-compatible"
 AI_BASE_URL="https://your-provider.example.com/v1"
 AI_API_KEY="你的 API Key"
@@ -54,6 +89,8 @@ AI_MODEL="your-vision-or-chat-model"
 
 - `DATABASE_URL` 建议使用 Neon 的 pooled connection string。
 - `DIRECT_URL` 建议使用 Neon 的 direct connection string，供 Prisma 迁移使用。
+- `NEXT_PUBLIC_LANDING_VIDEO_URL` 为可选首页背景视频；留空时使用内置渐变背景。
+- `SEED_DEMO_EMAIL` / `SEED_DEMO_NAME` 为可选 seed 演示账号，默认 `demo@example.com`。
 - AI 支持任意 OpenAI 兼容 Provider，不限定单一模型。月报总结与问答可用文本或多模态模型；**截图 OCR 导入建议使用支持图像输入的多模态模型**。
 - 未配置完整的 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 时，AI 相关接口会直接返回错误，不启用 Mock 回答。
 
@@ -140,7 +177,7 @@ pnpm dev
 
 `/dashboard/calendar` 按真实数据库记录生成每月日历，支持中国节假日、周末和当天考勤状态展示。点击某一天会载入右侧编辑器，可在当天 23:59 前设置上班打卡、下班打卡和备注，保存后写入数据库并重新计算有效出勤、加班、迟到、早退和异常状态。
 
-节假日与调休规则维护见 `docs/china-holiday-rules.md`。同步候选规则：
+节假日与调休规则维护见 [docs/china-holiday-rules.md](./docs/china-holiday-rules.md)。同步候选规则：
 
 ```bash
 pnpm calendar:sync -- 2026
@@ -199,6 +236,7 @@ pnpm build
 - `DIRECT_URL`
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_LANDING_VIDEO_URL`（可选）
 - `AI_PROVIDER`
 - `AI_BASE_URL`
 - `AI_API_KEY`
@@ -215,6 +253,17 @@ Neon 建议使用 pooled connection string 作为 `DATABASE_URL`，direct connec
 - Excel 解析异常：确认首个工作表包含表头，且日期/上下班字段可识别。
 - 分享页数据与当前 Dashboard 不一致：分享页展示的是创建链接时的快照，不会自动跟随规则或记录变更。
 
+## 参与贡献
+
+欢迎 Issue 与 Pull Request。请先阅读：
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [SECURITY.md](./SECURITY.md)
+
+## 许可证
+
+本项目采用 [MIT License](./LICENSE) 开源。
+
 ## AI 协作
 
-在本项目中使用 AI 编程助手时，请先阅读 `AGENTS.md` 与 `CLAUDE.md`。
+在本项目中使用 AI 编程助手时，请先阅读 [AGENTS.md](./AGENTS.md) 与 [CLAUDE.md](./CLAUDE.md)。
