@@ -1,6 +1,6 @@
 {
   "name": "overtime-tracker",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "description": "智能加班统计、考勤分析与 AI 月报生成平台（Next.js + Prisma + PostgreSQL）",
   "license": "MIT",
   "author": "Durun Song <https://github.com/durunsong>",
@@ -21,7 +21,9 @@
     "postgresql",
     "ai",
     "china-holiday",
-    "workforce-analytics"
+    "workforce-analytics",
+    "overtime-tracker",
+    "overtime-tracker-ai",
   ],
   "packageManager": "pnpm@10.33.0",
   "engines": {
@@ -34,8 +36,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "prisma generate && vitest run",
+    "test:watch": "prisma generate && vitest",
     "calendar:sync": "tsx scripts/sync-china-holidays.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
