@@ -4,13 +4,50 @@
 
 Claude Code 在 `overtime-tracker/` 中工作时，必须优先遵守同目录 `AGENTS.md`，并补充执行以下约定：
 
-- 开始编码前，先读取 `docs/规范.md`、`docs/prompt.md` 和待修改文件的上下文。
-- 这是 Next.js 16 项目。涉及 App Router、Route Handlers、缓存、Server/Client Components、metadata、font、image、config 等能力时，先查 `node_modules/next/dist/docs/` 的对应文档。
-- 先小步实现、再验证。不要一次生成超大页面、超大工具文件或无法维护的全量功能。
-- 页面与组件优先拆分到 `components/`、`lib/`、`types/` 等目录，避免把业务逻辑堆在 `app/**/page.tsx`。
-- 加班计算、Excel 解析、AI Prompt、Prisma 访问、月报导出必须封装为独立模块。
-- 修改后优先运行项目已有命令：`npm run lint`，必要时运行 `npm run build`。如果命令失败或未运行，最终回复必须说明原因。
-- 不修改 `.env*`、`node_modules/`、`.next/`、构建产物或真实密钥配置。
+## 开始任务前
+
+1. 读取 `AGENTS.md`、`README.md`、`docs/china-holiday-rules.md` 与待修改文件上下文。
+2. 确认任务是否涉及加班口径、节假日规则、AI 配置、导入流程或分享快照；涉及时必须对照 `lib/attendance/calculate.ts`、`lib/calendar/`、`lib/ai/` 现有实现。
+3. 检查工作区是否已有用户改动，不要覆盖或回滚无关 diff。
+
+## Next.js 16 注意事项
+
+- 涉及 App Router、Route Handlers、缓存、Server/Client Components、metadata、font、image、config 等能力时，先查 `node_modules/next/dist/docs/` 对应文档。
+- 只在需要 hooks、浏览器 API、动画库或交互状态时添加 `"use client"`。
+- 页面与组件优先拆分到 `components/`、`lib/`、`types/`，避免把业务逻辑堆在 `app/**/page.tsx`。
+
+## 模块边界
+
+必须封装为独立模块的能力：
+
+- 加班计算与时间解析 → `lib/attendance/`
+- Excel 解析与导入 → `lib/excel/`、`lib/import/`
+- AI Client、Prompt、截图 OCR、问答流 → `lib/ai/`
+- Prisma 数据访问 → `lib/data/`、`lib/prisma.ts`
+- 月报生成与导出 → `lib/reports/`
+- 认证与会话 → `lib/auth/`
+
+## AI 配置
+
+- 文档与示例默认使用智谱 GLM `glm-4.6v-flashx`，Base URL 为 `https://open.bigmodel.cn/api/paas/v4`。
+- 不提供 Mock AI；配置缺失时接口应返回明确错误。
+- 修改 Prompt 时只改 `lib/ai/prompts.ts`，并考虑截图导入与文本问答两类场景。
+
+## 验证与交付
+
+- 修改后优先运行 `npm run test`、`npm run lint`；涉及构建或路由变更时运行 `npm run build`。
+- 如果命令失败或未运行，最终回复必须说明原因与已做的替代检查。
+- 不修改 `.env*`、`node_modules/`、`.next/`、构建产物或真实密钥配置；环境示例只维护 `.env.example`。
 - 每次交付前检查本次改动文件的 UTF-8 编码和中文可读性，发现乱码先修复。
 
-阶段推进顺序以 `docs/规范.md` 的 Phase 1 到 Phase 8 为准；除非用户明确指定，否则优先先完成基础设施、核心计算和基础页面，再扩展 Excel、月报和 AI。
+## 受保护范围
+
+```text
+.env*
+node_modules/**
+.next/**
+dist/**
+build/**
+```
+
+除非用户在当前任务中明确点名，否则不要修改上述内容。
