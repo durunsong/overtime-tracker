@@ -18,7 +18,7 @@ const shouldWriteJson = process.argv.includes("--write-json");
 
 async function main() {
   if (!Number.isInteger(year) || year < 2000 || year > 2100) {
-    console.error("用法：npm run calendar:sync -- 2026 [-- --write-json]");
+    console.error("用法：pnpm calendar:sync -- 2026 [-- --write-json]");
     process.exit(1);
   }
 

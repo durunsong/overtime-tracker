@@ -21,6 +21,19 @@
 - Prisma 7、PostgreSQL（推荐 Neon）
 - Recharts、xlsx、date-fns、zod、react-hook-form、sonner、lucide-react
 - Vercel AI SDK + OpenAI 兼容接口（Provider / 模型通过环境变量配置）
+- 包管理器：**pnpm**（项目仅支持 pnpm，请勿使用 npm / yarn）
+
+## 环境要求
+
+- Node.js 20+
+- [pnpm](https://pnpm.io/installation) 10+
+
+启用 Corepack 后可直接使用项目锁定的 pnpm 版本：
+
+```bash
+corepack enable
+corepack prepare pnpm@10.33.0 --activate
+```
 
 ## 环境变量
 
@@ -47,10 +60,10 @@ AI_MODEL="your-vision-or-chat-model"
 ## Prisma / Neon
 
 ```bash
-npx prisma generate
-npx prisma migrate dev
-npx prisma db seed
-npx prisma studio
+pnpm prisma:generate
+pnpm prisma:migrate
+pnpm seed
+pnpm prisma:studio
 ```
 
 当前 Prisma Schema 包含 `User`、`UserSession`、`PasswordResetToken`、`AttendanceRecord`、`ImportBatch`、`WorkRule`、`MonthlyReport`、`OvertimeShare`，所有业务数据按 `userId` 隔离。
@@ -58,8 +71,8 @@ npx prisma studio
 ## 本地启动
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 访问：
@@ -130,7 +143,7 @@ npm run dev
 节假日与调休规则维护见 `docs/china-holiday-rules.md`。同步候选规则：
 
 ```bash
-npm run calendar:sync -- 2026
+pnpm calendar:sync -- 2026
 ```
 
 ## AI 配置
@@ -173,14 +186,14 @@ Dashboard 可将指定月份月报生成公开分享链接，访问 `/share/[tok
 ## 验证命令
 
 ```bash
-npm run test
-npm run lint
-npm run build
+pnpm test
+pnpm lint
+pnpm build
 ```
 
 ## 部署说明
 
-推荐部署到 Vercel，并在 Project Settings 中配置：
+推荐部署到 Vercel。项目包含 `pnpm-lock.yaml` 与 `packageManager` 字段，Vercel 会自动使用 pnpm 安装依赖。请在 Project Settings 中配置：
 
 - `DATABASE_URL`
 - `DIRECT_URL`
@@ -196,7 +209,7 @@ Neon 建议使用 pooled connection string 作为 `DATABASE_URL`，direct connec
 ## 常见问题
 
 - 页面能打开但写入失败：检查 `.env` 是否配置 `DATABASE_URL`。
-- `prisma migrate dev` 失败：检查 Neon 连接串、SSL 参数和网络连通性。
+- `prisma migrate dev` 失败：检查 Neon 连接串、SSL 参数和网络连通性；本地请使用 `pnpm prisma:migrate`。
 - AI 无输出：检查 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 是否完整，Key 是否有效。
 - 截图导入失败：确认 `AI_MODEL` 为支持图像输入的多模态模型，而不是纯文本模型；并检查 `AI_BASE_URL` 是否与 Provider 文档一致。
 - Excel 解析异常：确认首个工作表包含表头，且日期/上下班字段可识别。

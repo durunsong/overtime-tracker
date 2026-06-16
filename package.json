@@ -2,7 +2,13 @@
   "name": "overtime-tracker",
   "version": "1.0.13",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
   "scripts": {
+    "preinstall": "node -e \"if(!/pnpm/.test(process.env.npm_config_user_agent||'')){console.error('\\n请使用 pnpm 安装依赖：pnpm install\\n');process.exit(1)}\"",
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
@@ -17,6 +23,16 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.65",

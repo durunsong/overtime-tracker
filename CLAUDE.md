@@ -37,7 +37,7 @@ Claude Code 在 `overtime-tracker/` 中工作时，必须优先遵守同目录 `
 
 ## 验证与交付
 
-- 修改后优先运行 `npm run test`、`npm run lint`；涉及构建或路由变更时运行 `npm run build`。
+- 修改后优先运行 `pnpm test`、`pnpm lint`；涉及构建或路由变更时运行 `pnpm build`。
 - 如果命令失败或未运行，最终回复必须说明原因与已做的替代检查。
 - 不修改 `.env*`、`node_modules/`、`.next/`、构建产物或真实密钥配置；环境示例只维护 `.env.example`。
 - 每次交付前检查本次改动文件的 UTF-8 编码和中文可读性，发现乱码先修复。

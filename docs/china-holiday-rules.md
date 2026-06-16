@@ -21,13 +21,13 @@
 1. 拉取候选规则：
 
 ```bash
-npm run calendar:sync -- 2026
+pnpm calendar:sync -- 2026
 ```
 
 2. 如需保留候选 JSON 便于人工复核：
 
 ```bash
-npm run calendar:sync -- 2026 -- --write-json
+pnpm calendar:sync -- 2026 -- --write-json
 ```
 
 3. 对照国务院办公厅通知复核候选规则。
@@ -37,9 +37,9 @@ npm run calendar:sync -- 2026 -- --write-json
 5. 运行验证：
 
 ```bash
-npm test -- lib/attendance/calculate.test.ts
-npm run lint
-npm run build
+pnpm test lib/attendance/calculate.test.ts
+pnpm lint
+pnpm build
 ```
 
 ## 运营注意事项

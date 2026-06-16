@@ -40,6 +40,7 @@
 - 数据库使用 Prisma 7 + PostgreSQL（本地/部署常用 Neon）。
 - AI 使用 Vercel AI SDK（`ai`、`@ai-sdk/openai`）接入 OpenAI 兼容接口；Provider 与模型通过环境变量配置，不限定单一厂商。截图导入对智谱等部分端点有额外适配。
 - 测试使用 Vitest，Lint 使用 ESLint（`eslint-config-next`）。
+- 包管理器统一使用 **pnpm**；不要使用 `npm install` / `yarn install`，锁文件以 `pnpm-lock.yaml` 为准。
 - 不主动新增依赖。确需新增时，先说明用途、影响和替代方案。
 
 ## 目录与分层
@@ -83,7 +84,7 @@ Prisma Schema 当前包含：
 
 - `AttendanceRecord` 对 `(userId, workDate)` 唯一。
 - 所有业务数据按 `userId` 隔离；会话通过 `UserSession.tokenHash` 校验。
-- 新增或调整数据库结构时，同步更新 `prisma/schema.prisma`，并说明需执行的 `npx prisma generate`、`npx prisma migrate dev` 等命令。
+- 新增或调整数据库结构时，同步更新 `prisma/schema.prisma`，并说明需执行的 `pnpm prisma:generate`、`pnpm prisma:migrate` 等命令。
 - 不修改 `.env*`；只维护 `.env.example` 模板，不写入真实连接串、密钥或生产配置。
 
 ## 核心加班计算口径
@@ -220,11 +221,11 @@ Excel：
 - 修改业务逻辑后优先运行：
 
 ```bash
-npm run test
-npm run lint
-npm run build
+pnpm test
+pnpm lint
+pnpm build
 ```
 
-- 涉及用户可见页面时，尽量启动 `npm run dev` 并做浏览器验证。
+- 涉及用户可见页面时，尽量启动 `pnpm dev` 并做浏览器验证。
 - 每次修改后检查本次改动文件是否为 UTF-8，且不存在中文乱码、异常替换字符或 BOM 异常。
 - 最终交付必须说明：改了哪些文件、做了哪些验证、是否检查乱码、是否有风险或待确认事项。
