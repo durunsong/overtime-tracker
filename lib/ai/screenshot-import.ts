@@ -39,12 +39,17 @@ export async function parseAttendanceScreenshots(
   files: ScreenshotImportFile[],
   rule: WorkRuleInput = defaultWorkRule,
 ): Promise<ImportPreview> {
-  return parseAttendanceScreenshotBatches(files, (chunk) => parseAttendanceScreenshotChunk(chunk, rule));
+  return parseAttendanceScreenshotBatches(
+    files,
+    (chunk) => parseAttendanceScreenshotChunk(chunk, rule),
+    rule,
+  );
 }
 
 export async function parseAttendanceScreenshotBatches(
   files: ScreenshotImportFile[],
   parseChunk: (files: ScreenshotImportFile[]) => Promise<ImportPreview>,
+  rule: WorkRuleInput = defaultWorkRule,
 ): Promise<ImportPreview> {
   const previews = [];
   for (const chunk of chunkScreenshotImportFiles(files)) {
@@ -55,7 +60,7 @@ export async function parseAttendanceScreenshotBatches(
     }
   }
 
-  return mergeScreenshotImportPreviews(previews);
+  return mergeScreenshotImportPreviews(previews, rule);
 }
 
 async function parseAttendanceScreenshotChunk(
@@ -145,8 +150,11 @@ export function chunkScreenshotImportFiles(files: ScreenshotImportFile[]) {
   return chunks;
 }
 
-export function mergeScreenshotImportPreviews(previews: ImportPreview[]): ImportPreview {
-  const rows = normalizePreviewRows(previews.flatMap((preview) => preview.rows));
+export function mergeScreenshotImportPreviews(
+  previews: ImportPreview[],
+  rule: WorkRuleInput = defaultWorkRule,
+): ImportPreview {
+  const rows = normalizePreviewRows(previews.flatMap((preview) => preview.rows), rule);
 
   return {
     headers: ["date", "name", "checkIn", "checkOut", "remark"],
