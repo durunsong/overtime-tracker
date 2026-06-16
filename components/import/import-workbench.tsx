@@ -1,9 +1,9 @@
 "use client";
 
 import type { ClipboardEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Download, FileImage, FileUp, ImageUp, Loader2, Sparkles, UploadCloud, X } from "lucide-react";
+import { Download, Eye, FileImage, FileUp, ImageUp, Loader2, Sparkles, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,9 +38,14 @@ export function ImportWorkbench() {
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState<ScreenshotImportResult | null>(null);
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
+  const [previewFileIndex, setPreviewFileIndex] = useState<number | null>(null);
   const [activeDropzone, setActiveDropzone] = useState<"screenshot" | "excel" | null>(null);
   const importedMonths = preview ? getImportedRecordMonths(preview) : [];
   const primaryImportedMonth = importedMonths[0];
+  const screenshotPreviewFile =
+    previewFileIndex !== null && previewFileIndex < screenshotFiles.length
+      ? screenshotFiles[previewFileIndex]
+      : null;
 
   async function previewFile(file: File) {
     if (!/\.(xlsx|xls)$/i.test(file.name)) {
@@ -212,7 +217,15 @@ export function ImportWorkbench() {
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-slate-300">待导入截图 {screenshotFiles.length} / {maxScreenshotQueueCount}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setScreenshotFiles([])}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setPreviewFileIndex(null);
+                      setScreenshotFiles([]);
+                    }}
+                  >
                     清空
                   </Button>
                 </div>
@@ -224,12 +237,28 @@ export function ImportWorkbench() {
                     >
                       <FileImage className="h-4 w-4 shrink-0 text-fuchsia-100" />
                       <span className="min-w-0 flex-1 truncate text-slate-200">{file.name}</span>
+                      <button
+                        type="button"
+                        aria-label={`预览 ${file.name}`}
+                        className="rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-cyan-100"
+                        onClick={() => setPreviewFileIndex(index)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <span className="shrink-0 text-xs text-slate-500">{formatFileSize(file.size)}</span>
                       <button
                         type="button"
                         aria-label={`移除 ${file.name}`}
                         className="rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-white"
-                        onClick={() => setScreenshotFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                        onClick={() => {
+                          setScreenshotFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
+                          setPreviewFileIndex((current) => {
+                            if (current === null) return null;
+                            if (current === index) return null;
+                            if (current > index) return current - 1;
+                            return current;
+                          });
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -387,6 +416,64 @@ export function ImportWorkbench() {
           )}
         </CardContent>
       </Card>
+
+      {screenshotPreviewFile ? (
+        <ScreenshotPreviewDialog file={screenshotPreviewFile} onClose={() => setPreviewFileIndex(null)} />
+      ) : null}
+    </div>
+  );
+}
+
+function ScreenshotPreviewDialog({ file, onClose }: { file: File; onClose: () => void }) {
+  const previewUrl = useMemo(() => URL.createObjectURL(file), [file]);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`预览 ${file.name}`}
+      onClick={onClose}
+    >
+      <div
+        className="relative flex max-h-[90vh] w-full max-w-5xl flex-col items-center"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="关闭预览"
+          className="absolute -top-2 right-0 rounded p-1 text-slate-400 transition hover:bg-white/10 hover:text-white sm:-right-2"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </button>
+        {/* Blob URL preview requires a native img element. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={previewUrl}
+          alt={file.name}
+          className="max-h-[78vh] w-auto max-w-full rounded-lg border border-white/10 bg-black/40 object-contain shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+        />
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-300">
+          <span className="max-w-[min(70vw,520px)] truncate">{file.name}</span>
+          <span className="text-slate-500">{formatFileSize(file.size)}</span>
+        </div>
+      </div>
     </div>
   );
 }
