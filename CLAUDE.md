@@ -29,7 +29,9 @@ Claude Code 在 `overtime-tracker/` 中工作时，必须优先遵守同目录 `
 
 ## AI 配置
 
-- 文档与示例默认使用智谱 GLM `glm-4.6v-flashx`，Base URL 为 `https://open.bigmodel.cn/api/paas/v4`。
+- AI 通过 `AI_PROVIDER`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 接入 OpenAI 兼容接口，不限定单一厂商或模型。
+- 截图 OCR 需要支持图像输入的多模态模型；文本总结与问答可使用文本或多模态模型。
+- `.env.example` 中的 GLM 配置仅作示例，可替换为任意兼容 Provider。
 - 不提供 Mock AI；配置缺失时接口应返回明确错误。
 - 修改 Prompt 时只改 `lib/ai/prompts.ts`，并考虑截图导入与文本问答两类场景。
 

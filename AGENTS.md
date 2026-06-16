@@ -38,7 +38,7 @@
 - 表单与接口校验使用 `zod`；表单处理使用 `react-hook-form`。
 - Toast 使用 `sonner`，图标使用 `lucide-react`，动效使用 `framer-motion`。
 - 数据库使用 Prisma 7 + PostgreSQL（本地/部署常用 Neon）。
-- AI 使用 Vercel AI SDK（`ai`、`@ai-sdk/openai`）接入 OpenAI 兼容接口；截图导入对智谱 GLM 有原生视觉请求适配。
+- AI 使用 Vercel AI SDK（`ai`、`@ai-sdk/openai`）接入 OpenAI 兼容接口；Provider 与模型通过环境变量配置，不限定单一厂商。截图导入对智谱等部分端点有额外适配。
 - 测试使用 Vitest，Lint 使用 ESLint（`eslint-config-next`）。
 - 不主动新增依赖。确需新增时，先说明用途、影响和替代方案。
 
@@ -165,14 +165,23 @@ type ApiResponse<T> = {
 
 ## AI 功能边界
 
-默认推荐接入智谱 GLM 视觉模型 `glm-4.6v-flashx`，用于月报总结、问答和截图 OCR 导入。
+AI 通过 OpenAI 兼容接口接入，**不限定单一模型或厂商**。只要 Provider 支持 Chat Completions，且模型具备所需能力，即可用于月报总结、问答和截图 OCR 导入。
 
-配置方式（详见 `README.md` 与 `.env.example`）：
+模型选择建议：
 
-- `AI_PROVIDER="zhipu"`
-- `AI_BASE_URL="https://open.bigmodel.cn/api/paas/v4"`
-- `AI_API_KEY`：智谱开放平台 API Key
-- `AI_MODEL="glm-4.6v-flashx"`
+- **文本总结与问答**：任意兼容的文本或多模态模型均可。
+- **截图 OCR 导入**：优先选择支持图像输入的多模态（Vision）模型；纯文本模型会在接口层返回明确错误。
+- 示例（任选其一，按实际 Provider 文档填写 `AI_BASE_URL` 与 `AI_MODEL`）：
+  - 智谱：`glm-4.6v-flashx`、`glm-4.6v-flash`
+  - OpenAI：`gpt-4o`、`gpt-4o-mini`
+  - 其他兼容网关：按服务商文档填写模型名
+
+配置项（详见 `README.md` 与 `.env.example`）：
+
+- `AI_PROVIDER`：Provider 标识，便于区分适配逻辑（如 `zhipu`、`openai`、`openai-compatible`）
+- `AI_BASE_URL`：OpenAI 兼容 Base URL
+- `AI_API_KEY`：对应 Provider 的 API Key
+- `AI_MODEL`：模型名，需与 Provider 文档一致
 
 实现约束：
 
@@ -181,7 +190,7 @@ type ApiResponse<T> = {
 - API Key、模型名、Base URL 只能通过环境变量读取。
 - 无 Key 或配置不完整时接口必须明确报错，不允许 Mock 回答。
 - Prompt 统一维护在 `lib/ai/prompts.ts`。
-- 截图导入走 `lib/ai/screenshot-import.ts`；智谱端点使用 `resolveChatCompletionsUrl` 与 `buildZhipuScreenshotMessages`。
+- 截图导入走 `lib/ai/screenshot-import.ts`；智谱等特定端点可走 `resolveChatCompletionsUrl` 与 `buildZhipuScreenshotMessages`。
 - 文本流式问答走 `lib/ai/tools.ts` 与 `streamAiText`。
 
 ## Excel 与截图导入

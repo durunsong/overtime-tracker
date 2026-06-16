@@ -20,7 +20,7 @@
 - Tailwind CSS v4、本地 shadcn/ui 风格组件、Framer Motion
 - Prisma 7、PostgreSQL（推荐 Neon）
 - Recharts、xlsx、date-fns、zod、react-hook-form、sonner、lucide-react
-- Vercel AI SDK + OpenAI 兼容接口（默认接入智谱 GLM）
+- Vercel AI SDK + OpenAI 兼容接口（Provider / 模型通过环境变量配置）
 
 ## 环境变量
 
@@ -31,18 +31,17 @@ DATABASE_URL="你的 Neon pooled connection string"
 DIRECT_URL="你的 Neon direct connection string"
 NEXT_PUBLIC_APP_NAME="Overtime Tracker"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-AI_PROVIDER="zhipu"
-AI_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
-AI_API_KEY="你的智谱 API Key"
-AI_MODEL="glm-4.6v-flashx"
+AI_PROVIDER="openai-compatible"
+AI_BASE_URL="https://your-provider.example.com/v1"
+AI_API_KEY="你的 API Key"
+AI_MODEL="your-vision-or-chat-model"
 ```
 
 说明：
 
 - `DATABASE_URL` 建议使用 Neon 的 pooled connection string。
 - `DIRECT_URL` 建议使用 Neon 的 direct connection string，供 Prisma 迁移使用。
-- AI 默认使用智谱 GLM 视觉模型 `glm-4.6v-flashx`，同时覆盖文本总结、问答和截图 OCR 导入。
-- 可在 [智谱 AI 开放平台](https://open.bigmodel.cn/) 创建 API Key。
+- AI 支持任意 OpenAI 兼容 Provider，不限定单一模型。月报总结与问答可用文本或多模态模型；**截图 OCR 导入建议使用支持图像输入的多模态模型**。
 - 未配置完整的 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 时，AI 相关接口会直接返回错误，不启用 Mock 回答。
 
 ## Prisma / Neon
@@ -97,7 +96,7 @@ npm run dev
 
 要求：
 
-- 必须配置支持图像输入的视觉模型（默认 `glm-4.6v-flashx`）。
+- 必须配置支持图像输入的多模态（Vision）模型。
 - 若模型不支持图像，接口会返回明确错误，提示更换视觉模型。
 - 识别结果会经过 JSON 校验与考勤字段校验后再进入预览流程。
 
@@ -136,28 +135,36 @@ npm run calendar:sync -- 2026
 
 ## AI 配置
 
-AI 通过 `AI_PROVIDER`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 接入 OpenAI 兼容接口。
+AI 通过 `AI_PROVIDER`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 接入 OpenAI 兼容接口，**不限定单一厂商或模型**。
 
-默认推荐智谱 GLM：
+| 能力 | 模型要求 |
+| --- | --- |
+| 月报 AI 总结 | 文本或多模态模型 |
+| `/dashboard/ai` 流式问答 | 文本或多模态模型 |
+| 截图 OCR 导入 | 支持图像输入的多模态模型 |
+
+配置示例（任选其一，按 Provider 文档填写）：
 
 ```env
+# 示例 1：智谱 GLM 多模态
 AI_PROVIDER="zhipu"
 AI_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
-AI_API_KEY="你的智谱 API Key"
+AI_API_KEY="你的 API Key"
 AI_MODEL="glm-4.6v-flashx"
+
+# 示例 2：OpenAI 兼容网关
+AI_PROVIDER="openai"
+AI_BASE_URL="https://api.openai.com/v1"
+AI_API_KEY="你的 API Key"
+AI_MODEL="gpt-4o"
 ```
-
-能力说明：
-
-- `/dashboard/ai`：基于真实月报数据的流式问答
-- 月报 AI 总结：基于当月统计数据生成 HR 可读摘要
-- 截图导入：OCR 抽取打卡记录
 
 约束：
 
 - AI 只能基于真实考勤数据或上传截图回答，不能编造。
 - 配置不完整时接口直接报错，不提供 Mock 回答。
 - Prompt 统一维护在 `lib/ai/prompts.ts`。
+- 更换 Provider 时，只需修改上述四个环境变量，无需改业务代码。
 
 ## 公开分享
 
@@ -191,7 +198,7 @@ Neon 建议使用 pooled connection string 作为 `DATABASE_URL`，direct connec
 - 页面能打开但写入失败：检查 `.env` 是否配置 `DATABASE_URL`。
 - `prisma migrate dev` 失败：检查 Neon 连接串、SSL 参数和网络连通性。
 - AI 无输出：检查 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL` 是否完整，Key 是否有效。
-- 截图导入失败：确认使用的是视觉模型 `glm-4.6v-flashx`，而不是纯文本模型。
+- 截图导入失败：确认 `AI_MODEL` 为支持图像输入的多模态模型，而不是纯文本模型；并检查 `AI_BASE_URL` 是否与 Provider 文档一致。
 - Excel 解析异常：确认首个工作表包含表头，且日期/上下班字段可识别。
 - 分享页数据与当前 Dashboard 不一致：分享页展示的是创建链接时的快照，不会自动跟随规则或记录变更。
 
