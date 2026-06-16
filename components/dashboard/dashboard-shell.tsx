@@ -82,43 +82,43 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
       <div className="relative flex h-full min-h-0">
         <aside
           className={cn(
-            "hidden h-dvh flex-none flex-col border-r border-white/10 bg-slate-950/70 py-6 backdrop-blur-xl transition-[width,padding] duration-200 ease-out lg:flex",
-            sidebarCollapsed ? "w-[4.75rem] px-3" : "w-72 px-5",
+            "hidden h-dvh w-72 flex-none flex-col overflow-hidden border-r border-white/10 bg-slate-950/70 px-3 py-6 backdrop-blur-xl transition-[width] duration-300 ease-in-out lg:flex",
+            sidebarCollapsed && "w-[4.75rem]",
           )}
         >
-          <div
-            className={cn(
-              "flex shrink-0 items-start",
-              sidebarCollapsed ? "flex-col items-center gap-3" : "justify-between gap-2",
-            )}
-          >
+          <div className="relative flex h-10 shrink-0 items-center overflow-hidden">
             <Link
               href="/"
               className={cn(
-                "flex min-w-0 items-center gap-3",
-                sidebarCollapsed && "justify-center",
+                "flex min-w-0 items-center gap-3 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out",
+                sidebarCollapsed
+                  ? "pointer-events-none max-w-0 opacity-0"
+                  : "max-w-full flex-1 pr-10 opacity-100",
               )}
+              tabIndex={sidebarCollapsed ? -1 : undefined}
+              aria-hidden={sidebarCollapsed}
               title={sidebarCollapsed ? "Overtime Tracker" : undefined}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-950 ring-1 ring-cyan-200/30">
                 <Image src="/icon.svg" alt="" width={40} height={40} aria-hidden="true" priority />
               </div>
-              {!sidebarCollapsed ? (
-                <div className="min-w-0">
-                  <p className="font-semibold text-white">Overtime Tracker</p>
-                  <p className="text-xs text-slate-500">智能加班统计平台</p>
-                </div>
-              ) : null}
+              <div className="min-w-0 overflow-hidden">
+                <p className="truncate whitespace-nowrap font-semibold text-white">Overtime Tracker</p>
+                <p className="truncate whitespace-nowrap text-xs text-slate-500">智能加班统计平台</p>
+              </div>
             </Link>
 
             <SidebarToggleButton
               collapsed={sidebarCollapsed}
               onToggle={toggleSidebar}
-              className={sidebarCollapsed ? "self-center" : "mt-0.5 shrink-0"}
+              className={cn(
+                "absolute top-1/2 z-10 shrink-0 -translate-y-1/2 transition-[left,transform] duration-300 ease-in-out",
+                sidebarCollapsed ? "left-1/2 -translate-x-1/2" : "left-[calc(100%-2rem)] translate-x-0",
+              )}
             />
           </div>
 
-          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto">
+          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-x-hidden overflow-y-auto">
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (
@@ -127,25 +127,39 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                   href={item.href}
                   title={sidebarCollapsed ? item.label : undefined}
                   className={cn(
-                    "flex items-center rounded-md py-2.5 text-sm transition",
-                    sidebarCollapsed ? "justify-center px-0" : "gap-3 px-3",
+                    "flex items-center overflow-hidden rounded-md py-2.5 text-sm transition-colors",
+                    sidebarCollapsed ? "justify-center px-2" : "px-3",
                     active
                       ? "bg-white/12 text-white"
                       : "text-slate-400 hover:bg-white/8 hover:text-white",
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {!sidebarCollapsed ? item.label : null}
+                  <span
+                    className={cn(
+                      "block overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-in-out",
+                      sidebarCollapsed ? "ml-0 max-w-0 opacity-0" : "ml-3 max-w-[10rem] opacity-100",
+                    )}
+                    aria-hidden={sidebarCollapsed}
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
           </nav>
 
-          {!sidebarCollapsed ? (
-            <div className="mt-4 shrink-0 border-t border-white/10 pt-4">
-              <p className="px-3 text-xs text-slate-500">版本 v{APP_VERSION}</p>
-            </div>
-          ) : null}
+          <div
+            className={cn(
+              "mt-4 shrink-0 overflow-hidden border-white/10 transition-[max-height,opacity,border-color,margin-top,padding-top] duration-300 ease-in-out",
+              sidebarCollapsed
+                ? "max-h-0 border-t-0 opacity-0"
+                : "max-h-12 border-t pt-4 opacity-100",
+            )}
+            aria-hidden={sidebarCollapsed}
+          >
+            <p className="truncate whitespace-nowrap px-3 text-xs text-slate-500">版本 v{APP_VERSION}</p>
+          </div>
         </aside>
 
         <main className="flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto">
