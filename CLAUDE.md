@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-Claude Code 在 `overtime-tracker/` 中工作时，必须优先遵守同目录 `AGENTS.md`，并补充执行以下约定：
+Claude Code 在 `personal_code/overtime-tracker/` 中工作时，必须优先遵守同目录 `AGENTS.md` 与 `personal_code/AGENTS.md`，并补充执行以下约定：
 
 ## 开始任务前
 

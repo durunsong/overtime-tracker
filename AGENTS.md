@@ -1,6 +1,6 @@
 # overtime-tracker AI 协作规则
 
-本文件适用于 `overtime-tracker/` 子项目。修改本项目时，必须同时遵守仓库根目录 `AGENTS.md` 的安全边界；如与根目录规则冲突，以更严格、更安全的规则为准。
+本文件适用于 `personal_code/overtime-tracker/` 子项目。修改本项目时，必须同时遵守仓库根目录 `AGENTS.md` 与 `personal_code/AGENTS.md` 的安全边界；如与根目录规则冲突，以更严格、更安全的规则为准。
 
 ## 沟通与执行方式
 
