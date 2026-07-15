@@ -26,7 +26,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
       {
-        src: "/apple-icon.svg",
+        src: "/icon.svg",
         sizes: "any",
         type: "image/svg+xml",
       },

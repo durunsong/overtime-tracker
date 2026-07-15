@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Source_Serif_4 } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -11,6 +11,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +42,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml", sizes: "any" }],
     shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     type: "website",
@@ -65,7 +77,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+    <html
+      lang="zh-CN"
+      className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${sourceSerif.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col antialiased">
         {children}
         <Toaster richColors position="top-right" />

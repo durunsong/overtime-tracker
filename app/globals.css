@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -53,36 +52,88 @@ button:disabled,
   display: none;
 }
 
-.liquid-glass {
-  position: relative;
-  overflow: hidden;
-  border: none;
-  background: rgba(255, 255, 255, 0.01);
-  background-blend-mode: luminosity;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+@layer components {
+  .liquid-glass,
+  .liquid-glass-strong {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+  }
+
+  .liquid-glass {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .liquid-glass-strong {
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
+
+  .liquid-glass::before,
+  .liquid-glass-strong::before {
+    position: absolute;
+    inset: 0;
+    padding: 1.4px;
+    border-radius: inherit;
+    content: "";
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .liquid-glass::before {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 0.15) 80%,
+      rgba(255, 255, 255, 0.45) 100%
+    );
+  }
+
+  .liquid-glass-strong::before {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 0.2) 80%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+  }
 }
 
-.liquid-glass::before {
-  position: absolute;
-  inset: 0;
-  padding: 1.4px;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.15) 20%,
-    rgba(255, 255, 255, 0) 40%,
-    rgba(255, 255, 255, 0) 60%,
-    rgba(255, 255, 255, 0.15) 80%,
-    rgba(255, 255, 255, 0.45) 100%
-  );
-  content: "";
-  pointer-events: none;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+.landing-shell {
+  --landing-black: 0 0% 0%;
+  --landing-white: 0 0% 100%;
+  --radius: 1rem;
+  font-family: var(--font-poppins), "Microsoft YaHei", sans-serif;
+}
+
+.landing-serif {
+  font-family: var(--font-source-serif), "STSong", serif;
+  font-style: italic;
+}
+
+.landing-fallback {
+  background:
+    radial-gradient(circle at 22% 20%, hsl(0 0% 100% / 0.13), transparent 36%),
+    radial-gradient(circle at 78% 76%, hsl(0 0% 58% / 0.12), transparent 34%),
+    linear-gradient(135deg, hsl(0 0% 13%), hsl(var(--landing-black)) 68%);
+}
+
+.landing-shell ::selection {
+  background: hsl(var(--landing-white) / 0.22);
+  color: hsl(var(--landing-white));
 }
 
 .ai-thinking {

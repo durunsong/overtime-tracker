@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { getLandingSessionCopy, LANDING_COPY, resolveLandingVideoUrl } from "./landing-page";
+import {
+  DEFAULT_LANDING_VIDEO_URL,
+  getLandingSessionCopy,
+  LANDING_COPY,
+  resolveLandingVideoUrl,
+} from "./landing-page";
 
 describe("resolveLandingVideoUrl", () => {
-  it("returns empty string when video url is missing", () => {
-    expect(resolveLandingVideoUrl(undefined)).toBe("");
-    expect(resolveLandingVideoUrl("   ")).toBe("");
+  it("uses the default landing video when configuration is missing", () => {
+    expect(resolveLandingVideoUrl(undefined)).toBe(DEFAULT_LANDING_VIDEO_URL);
+    expect(resolveLandingVideoUrl("   ")).toBe(DEFAULT_LANDING_VIDEO_URL);
   });
 
   it("trims configured video url", () => {
@@ -29,10 +34,9 @@ describe("LANDING_COPY", () => {
       navActionHref: "/auth/login",
       secondaryActionLabel: "创建账号",
       secondaryActionHref: "/auth/register",
-      heroActionLabel: "进入统计看板",
-      heroActionHref: "/dashboard",
+      heroActionLabel: "开始统计",
+      heroActionHref: "/auth/register",
       helperText: LANDING_COPY.heroDescription,
-      showEmailForm: true,
       userLabel: null,
     });
   });
@@ -49,9 +53,8 @@ describe("LANDING_COPY", () => {
       isAuthenticated: true,
       navActionLabel: "进入工作台",
       navActionHref: "/dashboard",
-      heroActionLabel: "继续查看本月统计",
+      heroActionLabel: "查看本月统计",
       heroActionHref: "/dashboard",
-      showEmailForm: false,
       userLabel: "测试用户",
     });
     expect(view.helperText).toContain("欢迎回来");
