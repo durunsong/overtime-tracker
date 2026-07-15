@@ -85,6 +85,12 @@ describe("buildZhipuScreenshotMessages", () => {
     expect(messages[0]?.content[1]).toMatchObject({
       text: expect.stringContaining("image.png"),
     });
+    expect(messages[0]?.content[1]).toMatchObject({
+      text: expect.stringContaining("应取 8 日而不是 15 日"),
+    });
+    expect(messages[0]?.content[1]).toMatchObject({
+      text: expect.stringContaining("无法可靠判断这些时间对应哪一天，不要猜测日期"),
+    });
   });
 });
 
