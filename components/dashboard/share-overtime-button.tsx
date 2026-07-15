@@ -19,9 +19,11 @@ const monthOptions = Array.from({ length: 12 }, (_, index) => {
 
 export function ShareOvertimeButton() {
   const currentMonth = getCurrentMonth();
+  const currentYear = Number(currentMonth.slice(0, 4));
+  const currentMonthNumber = Number(currentMonth.slice(5, 7));
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(currentMonth);
-  const [viewYear, setViewYear] = useState(() => Number(currentMonth.slice(0, 4)));
+  const [viewYear, setViewYear] = useState(currentYear);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,7 +38,8 @@ export function ShareOvertimeButton() {
   }, [loading, open]);
 
   function openMonthDialog() {
-    setViewYear(Number(month.slice(0, 4)));
+    setMonth(currentMonth);
+    setViewYear(currentYear);
     setOpen(true);
   }
 
@@ -126,9 +129,11 @@ export function ShareOvertimeButton() {
               <button
                 type="button"
                 aria-label="下一年"
-                disabled={loading}
+                disabled={loading || viewYear >= currentYear}
                 onClick={() => setViewYear((year) => year + 1)}
-                className="rounded-md p-2 text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                className={`rounded-md p-2 text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${
+                  viewYear >= currentYear ? "invisible" : ""
+                }`}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -136,32 +141,34 @@ export function ShareOvertimeButton() {
 
             <fieldset className="mt-3 grid grid-cols-3 gap-2">
               <legend className="sr-only">分享月份</legend>
-              {monthOptions.map((option) => {
-                const value = `${viewYear}-${option.month}`;
-                const selected = month === value;
-                return (
-                  <label
-                    key={option.month}
-                    className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition ${
-                      selected
-                        ? "border-cyan-300/60 bg-cyan-300/12 text-cyan-50"
-                        : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="share-month"
-                      value={value}
-                      checked={selected}
-                      autoFocus={selected}
-                      disabled={loading}
-                      onChange={(event) => setMonth(event.target.value)}
-                      className="h-4 w-4 accent-cyan-300"
-                    />
-                    {option.label}
-                  </label>
-                );
-              })}
+              {monthOptions
+                .filter((option) => viewYear < currentYear || Number(option.month) <= currentMonthNumber)
+                .map((option) => {
+                  const value = `${viewYear}-${option.month}`;
+                  const selected = month === value;
+                  return (
+                    <label
+                      key={option.month}
+                      className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-3 text-sm font-medium transition focus-within:ring-2 focus-within:ring-cyan-300/60 ${
+                        selected
+                          ? "border-cyan-300 bg-cyan-300 text-slate-950 shadow-[0_8px_24px_rgba(103,232,249,0.2)]"
+                          : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-cyan-200/35 hover:bg-white/[0.07] hover:text-white"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="share-month"
+                        value={value}
+                        checked={selected}
+                        autoFocus={selected}
+                        disabled={loading}
+                        onChange={(event) => setMonth(event.target.value)}
+                        className="sr-only"
+                      />
+                      {option.label}
+                    </label>
+                  );
+                })}
             </fieldset>
 
             <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
