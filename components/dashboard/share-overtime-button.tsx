@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,22 +81,23 @@ export function ShareOvertimeButton() {
         分享我的加班数据
       </Button>
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="share-month-title"
-          onClick={() => !loading && setOpen(false)}
-        >
-          <form
-            className="w-full max-w-md rounded-xl border border-white/12 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void shareOvertime();
-            }}
-            onClick={(event) => event.stopPropagation()}
-          >
+      {open
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="share-month-title"
+              onClick={() => !loading && setOpen(false)}
+            >
+              <form
+                className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl border border-white/12 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void shareOvertime();
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="share-month-title" className="flex items-center gap-2 text-base font-semibold text-white">
@@ -180,9 +182,11 @@ export function ShareOvertimeButton() {
                 {loading ? "生成中" : "生成并复制"}
               </Button>
             </div>
-          </form>
-        </div>
-      ) : null}
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
