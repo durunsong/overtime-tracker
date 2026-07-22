@@ -86,7 +86,10 @@ describe("buildZhipuScreenshotMessages", () => {
       text: expect.stringContaining("image.png"),
     });
     expect(messages[0]?.content[1]).toMatchObject({
-      text: expect.stringContaining("应取 8 日而不是 15 日"),
+      text: expect.stringContaining("必须以实心选中日为准，禁止用今天描边覆盖"),
+    });
+    expect(messages[0]?.content[1]).toMatchObject({
+      text: expect.stringContaining("records.date 禁止使用"),
     });
     expect(messages[0]?.content[1]).toMatchObject({
       text: expect.stringContaining("无法可靠判断这些时间对应哪一天，不要猜测日期"),
