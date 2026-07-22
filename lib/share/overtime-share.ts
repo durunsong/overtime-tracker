@@ -4,6 +4,7 @@ import { loadMonthlyReportContext } from "@/lib/data/attendance-context";
 import { getPrisma } from "@/lib/prisma";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { getCurrentMonth } from "@/lib/date/month";
+import { BUSINESS_TIME_ZONE } from "@/lib/date/timezone";
 import { defaultWorkRule } from "@/types/attendance";
 import { toWorkRuleSnapshot } from "@/lib/attendance/work-rule";
 import type { WorkRuleSnapshot } from "@/types/report";
@@ -47,7 +48,7 @@ export function sanitizeShareToken(token: string) {
 
 export function formatChinaShareDateTime(date: Date) {
   const parts = new Intl.DateTimeFormat("zh-CN", {
-    timeZone: "Asia/Shanghai",
+    timeZone: BUSINESS_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -1,9 +1,8 @@
-import { format } from "date-fns";
 import { getPrisma } from "@/lib/prisma";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { calculateDailyAttendance } from "@/lib/attendance/calculate";
 import { mergeRecordsByWorkDate, normalizeWorkDate } from "@/lib/attendance/records";
-import { toDateKey } from "@/lib/attendance/parser";
+import { resolveAttendancePunchTimes, toDateKey } from "@/lib/attendance/parser";
 import { loadDefaultWorkRuleForUser } from "@/lib/data/work-rule-repository";
 import { loadWorkDayOverrideMapForUser } from "@/lib/data/work-day-override-repository";
 import type {
@@ -66,7 +65,7 @@ export async function loadAttendanceRecords(month?: string) {
   const views = mergeRecordsByWorkDate(records.map(recordToView)).map((record) =>
     recalculateLoadedRecord(record, rule, overrideMap),
   );
-  return month ? views.filter((record) => format(record.workDate, "yyyy-MM") === month) : views;
+  return month ? views.filter((record) => toDateKey(record.workDate).startsWith(month)) : views;
 }
 
 export async function createAttendanceRecord(input: AttendanceInput) {
@@ -183,12 +182,21 @@ export async function deleteAttendanceRecord(id: string) {
 }
 
 function recordToView(record: DbAttendanceRecord): AttendanceRecordView {
+  const workDate = normalizeWorkDate(record.workDate);
+  const punchTimes = resolveAttendancePunchTimes({
+    workDate,
+    checkInTime: record.checkInTime,
+    checkOutTime: record.checkOutTime,
+    rawCheckInText: record.rawCheckInText,
+    rawCheckOutText: record.rawCheckOutText,
+  });
+
   return {
     id: record.id,
     userId: record.userId,
-    workDate: record.workDate,
-    checkInTime: record.checkInTime,
-    checkOutTime: record.checkOutTime,
+    workDate,
+    checkInTime: punchTimes.checkInTime,
+    checkOutTime: punchTimes.checkOutTime,
     rawCheckInText: record.rawCheckInText,
     rawCheckOutText: record.rawCheckOutText,
     actualWorkMinutes: record.actualWorkMinutes,
@@ -204,9 +212,20 @@ function recordToView(record: DbAttendanceRecord): AttendanceRecordView {
 }
 
 function normalizeAttendanceInput(input: AttendanceInput): AttendanceInput {
+  const workDate = normalizeWorkDate(input.workDate);
+  const punchTimes = resolveAttendancePunchTimes({
+    workDate,
+    checkInTime: input.checkInTime,
+    checkOutTime: input.checkOutTime,
+    rawCheckInText: input.rawCheckInText,
+    rawCheckOutText: input.rawCheckOutText,
+  });
+
   return {
     ...input,
-    workDate: normalizeWorkDate(input.workDate),
+    workDate,
+    checkInTime: punchTimes.checkInTime,
+    checkOutTime: punchTimes.checkOutTime,
   };
 }
 

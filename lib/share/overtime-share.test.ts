@@ -75,7 +75,8 @@ describe("overtime share payload", () => {
     const parsed = parseOvertimeSharePayload(payload);
 
     expect(parsed.report.records[0].workDate).toBeInstanceOf(Date);
-    expect(parsed.report.records[0].checkOutTime?.toISOString()).toBe("2026-05-27T20:30:00.000Z");
+    expect(parsed.report.records[0].checkInTime?.toISOString()).toBe("2026-05-27T01:40:00.000Z");
+    expect(parsed.report.records[0].checkOutTime?.toISOString()).toBe("2026-05-27T12:30:00.000Z");
   });
 
   it("deduplicates public snapshots by calendar date while preserving snapshot totals", () => {

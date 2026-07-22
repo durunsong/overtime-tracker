@@ -1,30 +1,16 @@
-const defaultTimeZone = "Asia/Shanghai";
+import { BUSINESS_TIME_ZONE, formatDateKeyInTimeZone } from "@/lib/date/timezone";
+
 const monthPattern = /^\d{4}-\d{2}$/;
 
-export function getCurrentMonth(date = new Date(), timeZone = defaultTimeZone) {
+export function getCurrentMonth(date = new Date(), timeZone = BUSINESS_TIME_ZONE) {
   return getCurrentDateKey(date, timeZone).slice(0, 7);
 }
 
-export function getCurrentDateKey(date = new Date(), timeZone = defaultTimeZone) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
-  const day = parts.find((part) => part.type === "day")?.value;
-
-  if (!year || !month || !day) {
-    throw new Error("无法解析当前日期");
-  }
-
-  return `${year}-${month}-${day}`;
+export function getCurrentDateKey(date = new Date(), timeZone = BUSINESS_TIME_ZONE) {
+  return formatDateKeyInTimeZone(date, timeZone);
 }
 
-export function getCurrentMonthDate(day: number, date = new Date(), timeZone = defaultTimeZone) {
+export function getCurrentMonthDate(day: number, date = new Date(), timeZone = BUSINESS_TIME_ZONE) {
   return `${getCurrentMonth(date, timeZone)}-${String(day).padStart(2, "0")}`;
 }
 

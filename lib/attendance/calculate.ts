@@ -1,4 +1,4 @@
-import { addMinutes, differenceInMinutes, format, getISOWeek } from "date-fns";
+import { addMinutes, differenceInMinutes, getISOWeek } from "date-fns";
 import type {
   AttendanceCalculation,
   AttendanceInput,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/calendar/day-kind";
 import { mergeRecordsByWorkDate } from "@/lib/attendance/records";
 import { toWorkRuleSnapshot } from "@/lib/attendance/work-rule";
+import { formatPunchTimeRange } from "@/lib/attendance/formatter";
 import { toDateKey, toTimeOnDate } from "./parser";
 
 export type DailyCalculationOptions = {
@@ -175,7 +176,7 @@ export function calculateMonthlyReport(
   overrideMap: Map<string, WorkDayOverrideKind> = new Map(),
 ): MonthlyReportView {
   const monthRecords = mergeRecordsByWorkDate(records)
-    .filter((record) => format(record.workDate, "yyyy-MM") === month)
+    .filter((record) => toDateKey(record.workDate).startsWith(month))
     .sort((a, b) => a.workDate.getTime() - b.workDate.getTime());
 
   const workableRecords = monthRecords.filter(
@@ -234,7 +235,7 @@ export function calculateMonthlyReport(
 
 export function groupByMonth(records: AttendanceRecordView[]) {
   return records.reduce<Record<string, AttendanceRecordView[]>>((acc, record) => {
-    const key = format(record.workDate, "yyyy-MM");
+    const key = toDateKey(record.workDate).slice(0, 7);
     acc[key] = [...(acc[key] ?? []), record];
     return acc;
   }, {});
@@ -262,9 +263,6 @@ function groupByDay(records: AttendanceRecordView[]): TrendPoint[] {
     workMinutes: record.actualWorkMinutes,
     overtimeMinutes: record.overtimeMinutes,
     abnormalCount: ["ABSENT", "ABNORMAL"].includes(record.status) ? 1 : 0,
-    punchTimeRange:
-      record.checkInTime && record.checkOutTime
-        ? `${format(record.checkInTime, "HH:mm")}-${format(record.checkOutTime, "HH:mm")}`
-        : undefined,
+    punchTimeRange: formatPunchTimeRange(record),
   }));
 }

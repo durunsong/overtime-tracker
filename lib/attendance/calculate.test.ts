@@ -275,10 +275,31 @@ describe("attendance calculation", () => {
     expect(report.abnormalCount).toBe(1);
   });
 
+  it("prefers raw punch texts so chart tooltips stay stable across timezones", () => {
+    const workDate = new Date("2026-07-11T00:00:00.000Z");
+    const report = calculateMonthlyReport(
+      [
+        {
+          ...buildAttendanceRecord("weekend-sat", {
+            workDate,
+            // Stored as UTC wall-clock hours from a UTC server parseTime("09:02"/"22:20")
+            checkInTime: new Date("2026-07-11T09:02:00.000Z"),
+            checkOutTime: new Date("2026-07-11T22:20:00.000Z"),
+            rawCheckInText: "09:02",
+            rawCheckOutText: "22:20",
+          }),
+        },
+      ],
+      "2026-07",
+    );
+
+    expect(report.dayTrend[0]?.punchTimeRange).toBe("09:02-22:20");
+  });
+
   it("parses common date and time formats", () => {
     const date = parseExcelDate("2026/05/06");
     expect(date ? toDateKey(date) : null).toBe("2026-05-06");
-    expect(parseTime("19:45", date as Date)?.getHours()).toBe(19);
+    expect(parseTime("19:45", date as Date)?.toISOString()).toBe("2026-05-06T11:45:00.000Z");
   });
 
   it("formats minutes for UI and decimal hours", () => {

@@ -1,4 +1,4 @@
-import { parse } from "date-fns";
+import { combineBusinessDateAndTime } from "@/lib/date/timezone";
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -19,5 +19,5 @@ export function combineDateAndTime(date: string, time: string | null) {
     return null;
   }
 
-  return parse(`${date} ${time}`, "yyyy-MM-dd HH:mm", new Date());
+  return combineBusinessDateAndTime(date, time);
 }

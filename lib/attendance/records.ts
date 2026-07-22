@@ -1,20 +1,30 @@
-import { startOfDay } from "date-fns";
-import { toDateKey } from "@/lib/attendance/parser";
+import { formatDateKeyInTimeZone, startOfBusinessDay } from "@/lib/date/timezone";
+import { resolveAttendancePunchTimes } from "@/lib/attendance/parser";
 import type { AttendanceRecordView } from "@/types/attendance";
 
 export function normalizeWorkDate(date: Date) {
-  return startOfDay(date);
+  return startOfBusinessDay(date);
 }
 
 export function mergeRecordsByWorkDate<T extends AttendanceRecordView>(records: T[]): T[] {
   const recordsByDate = new Map<string, T>();
 
   for (const record of records) {
+    const workDate = normalizeWorkDate(record.workDate);
+    const punchTimes = resolveAttendancePunchTimes({
+      workDate,
+      checkInTime: record.checkInTime,
+      checkOutTime: record.checkOutTime,
+      rawCheckInText: record.rawCheckInText,
+      rawCheckOutText: record.rawCheckOutText,
+    });
     const normalizedRecord = {
       ...record,
-      workDate: normalizeWorkDate(record.workDate),
+      workDate,
+      checkInTime: punchTimes.checkInTime,
+      checkOutTime: punchTimes.checkOutTime,
     };
-    const dateKey = toDateKey(normalizedRecord.workDate);
+    const dateKey = formatDateKeyInTimeZone(normalizedRecord.workDate);
     const existing = recordsByDate.get(dateKey);
     recordsByDate.set(
       dateKey,
