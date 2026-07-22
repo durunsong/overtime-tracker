@@ -1,4 +1,7 @@
+import { BUSINESS_TIME_ZONE } from "@/lib/date/timezone";
+
 const lunarDateFormatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+  timeZone: BUSINESS_TIME_ZONE,
   month: "long",
   day: "numeric",
 });
