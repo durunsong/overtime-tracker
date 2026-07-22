@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { getCurrentMonth, getCurrentMonthDate, getMonthOrCurrent, isMonthValue } from "./month";
+import {
+  getCurrentDateKey,
+  getCurrentMonth,
+  getCurrentMonthDate,
+  getMonthOrCurrent,
+  isMonthValue,
+} from "./month";
 
 describe("month helpers", () => {
   it("formats the current month with the configured business timezone", () => {
     expect(getCurrentMonth(new Date("2026-05-31T16:30:00.000Z"))).toBe("2026-06");
+  });
+
+  it("formats the current date with the configured business timezone", () => {
+    expect(getCurrentDateKey(new Date("2026-05-31T16:30:00.000Z"))).toBe("2026-06-01");
   });
 
   it("builds dates inside the current month", () => {

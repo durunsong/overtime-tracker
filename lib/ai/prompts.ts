@@ -1,6 +1,7 @@
 import type { MonthlyReportView } from "@/types/report";
 import { formatMinutes } from "@/lib/attendance/formatter";
 import { formatWorkRuleSummary } from "@/lib/attendance/work-rule";
+import { getCurrentDateKey } from "@/lib/date/month";
 import { buildAverageOvertimeHelper } from "@/lib/reports/overtime-average";
 
 export function buildMonthlySummaryPrompt(report: MonthlyReportView) {
@@ -60,9 +61,18 @@ ${JSON.stringify(
 `;
 }
 
-export function buildScreenshotImportPrompt(fileNames: string[]) {
+export function buildScreenshotImportPrompt(
+  fileNames: string[],
+  today = getCurrentDateKey(),
+) {
+  const todayYear = today.slice(0, 4);
+
   return `
 你是考勤截图 OCR 与结构化抽取助手。请只基于用户上传的截图识别打卡记录，不要补造截图中不存在的信息。
+
+参考信息（仅用于消歧，不是默认打卡日期）：
+- 今天（系统当前日期）是 ${today}。除非截图中的“选中日期”也是这一天，否则 records.date 禁止使用 ${today}。
+- 截图缺少年份时，优先使用 ${todayYear}，不要随意回填更早年份。
 
 需要识别的图片文件：
 ${fileNames.map((fileName, index) => `${index + 1}. ${fileName}`).join("\n")}
@@ -82,8 +92,10 @@ ${fileNames.map((fileName, index) => `${index + 1}. ${fileName}`).join("\n")}
 
 规则：
 - 同一天可能有多次打卡时，checkIn 取最早打卡时间，checkOut 取最晚打卡时间。
-- 日历截图中，先确认下方打卡明细对应的“选中日期”，再组合标题中的年份和月份。选中日期通常是高对比度的实心高亮；浅色圆圈、描边或弱高亮可能只是“今天”标记，不能据此替换选中日期。
-- 不要把系统当前日期、“今天”标记或截图生成日期自动当成打卡明细日期。例如深色实心的 8 日与浅色的 15 日同时出现、明细面板展示所选日期内容时，应取 8 日而不是 15 日。
+- 日历截图中，下方打卡明细对应的是“选中日期”，不是“今天”。先找选中日期，再与标题中的年、月拼成 yyyy-MM-dd。
+- 选中日期通常是高对比度实心高亮（实心圆/实心底）；仅描边、浅色圆圈、弱高亮多半是“今天”标记。两者同时出现时，必须以实心选中日为准，禁止用今天描边覆盖。
+- 典型反例：标题为 2026年7月，实心高亮 17，描边高亮 22（今天），下方展示 09:24/21:00 打卡明细时，date 必须是 2026-07-17，绝不能写成 ${today} 或 2026-07-22。
+- 不要把系统当前日期、“今天”标记或截图生成日期自动当成打卡明细日期。
 - 如果截图包含打卡时间但无法可靠判断这些时间对应哪一天，不要猜测日期，也不要输出该条记录。
 - 不要把表头或字段名（如 date、name、checkIn、checkOut、remark、日期、姓名、上班、下班）输出为 records。
 - 如果截图只有日期但缺少上班或下班时间，对应字段返回 null，不要猜测。
