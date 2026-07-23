@@ -1,6 +1,7 @@
 export const BUSINESS_TIME_ZONE = "Asia/Shanghai";
 export const BUSINESS_UTC_OFFSET = "+08:00";
 
+const dateKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
 const dateKeyFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const clockFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
@@ -32,6 +33,18 @@ function getClockFormatter(timeZone: string) {
   return formatter;
 }
 
+function isDateKey(value: unknown): value is string {
+  return typeof value === "string" && dateKeyPattern.test(value);
+}
+
+function toValidDate(value: Date | string | number) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("无效日期");
+  }
+  return date;
+}
+
 function readParts(date: Date, formatter: Intl.DateTimeFormat) {
   return formatter.formatToParts(date).reduce<Record<string, string>>((acc, part) => {
     if (part.type !== "literal") {
@@ -41,30 +54,45 @@ function readParts(date: Date, formatter: Intl.DateTimeFormat) {
   }, {});
 }
 
-export function formatDateKeyInTimeZone(date: Date, timeZone = BUSINESS_TIME_ZONE) {
-  const parts = readParts(date, getDateKeyFormatter(timeZone));
+function resolveDateKey(dateOrKey: Date | string | number, timeZone = BUSINESS_TIME_ZONE) {
+  if (isDateKey(dateOrKey)) {
+    return dateOrKey;
+  }
+  return formatDateKeyInTimeZone(dateOrKey, timeZone);
+}
+
+export function formatDateKeyInTimeZone(
+  date: Date | string | number,
+  timeZone = BUSINESS_TIME_ZONE,
+) {
+  const parts = readParts(toValidDate(date), getDateKeyFormatter(timeZone));
   if (!parts.year || !parts.month || !parts.day) {
     throw new Error("无法按业务时区解析日期");
   }
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-export function formatClockInTimeZone(date: Date, timeZone = BUSINESS_TIME_ZONE) {
-  const parts = readParts(date, getClockFormatter(timeZone));
+export function formatClockInTimeZone(
+  date: Date | string | number,
+  timeZone = BUSINESS_TIME_ZONE,
+) {
+  const parts = readParts(toValidDate(date), getClockFormatter(timeZone));
   if (!parts.hour || !parts.minute) {
     throw new Error("无法按业务时区解析时间");
   }
   return `${parts.hour}:${parts.minute}`;
 }
 
-export function startOfBusinessDay(dateOrKey: Date | string, timeZone = BUSINESS_TIME_ZONE) {
-  const dateKey =
-    typeof dateOrKey === "string" ? dateOrKey : formatDateKeyInTimeZone(dateOrKey, timeZone);
+export function startOfBusinessDay(
+  dateOrKey: Date | string | number,
+  timeZone = BUSINESS_TIME_ZONE,
+) {
+  const dateKey = resolveDateKey(dateOrKey, timeZone);
   return new Date(`${dateKey}T00:00:00${BUSINESS_UTC_OFFSET}`);
 }
 
 export function combineBusinessDateAndTime(
-  dateOrKey: Date | string,
+  dateOrKey: Date | string | number,
   time: string,
   timeZone = BUSINESS_TIME_ZONE,
 ) {
@@ -80,8 +108,7 @@ export function combineBusinessDateAndTime(
     return null;
   }
 
-  const dateKey =
-    typeof dateOrKey === "string" ? dateOrKey : formatDateKeyInTimeZone(dateOrKey, timeZone);
+  const dateKey = resolveDateKey(dateOrKey, timeZone);
   const clock = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   return new Date(`${dateKey}T${clock}${BUSINESS_UTC_OFFSET}`);
 }

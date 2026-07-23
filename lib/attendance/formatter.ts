@@ -21,8 +21,8 @@ export function minutesToDecimalHours(minutes: number) {
 }
 
 export function formatPunchTimeRange(input: {
-  checkInTime?: Date | null;
-  checkOutTime?: Date | null;
+  checkInTime?: Date | string | null;
+  checkOutTime?: Date | string | null;
   rawCheckInText?: string | null;
   rawCheckOutText?: string | null;
 }) {

@@ -91,7 +91,7 @@ export function toTimeOnDate(time: string, date: Date) {
   );
 }
 
-export function toDateKey(date: Date) {
+export function toDateKey(date: Date | string | number) {
   return formatDateKeyInTimeZone(date, BUSINESS_TIME_ZONE);
 }
 

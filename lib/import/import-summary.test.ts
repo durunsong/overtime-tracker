@@ -78,4 +78,37 @@ describe("import summary", () => {
 
     expect(getImportedRecordMonths(preview)).toEqual(["2026-05", "2026-06"]);
   });
+
+  it("supports JSON-serialized workDate strings from import API responses", () => {
+    const preview = {
+      headers: [],
+      mapping: {},
+      totalRows: 1,
+      validRows: 1,
+      invalidRows: 0,
+      rows: [
+        {
+          rowNumber: 1,
+          raw: {},
+          errors: [],
+          record: {
+            id: "case-json",
+            source: "EXCEL_IMPORT",
+            workDate: "2026-07-10T16:00:00.000Z" as unknown as Date,
+            checkInTime: null,
+            checkOutTime: null,
+            actualWorkMinutes: 0,
+            standardWorkMinutes: 0,
+            overtimeMinutes: 0,
+            lateMinutes: 0,
+            earlyLeaveMinutes: 0,
+            status: "NORMAL",
+            issues: [],
+          },
+        },
+      ],
+    } satisfies ImportPreview;
+
+    expect(getImportedRecordMonths(preview)).toEqual(["2026-07"]);
+  });
 });

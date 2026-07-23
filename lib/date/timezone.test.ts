@@ -18,6 +18,14 @@ describe("business timezone helpers", () => {
     expect(formatClockInTimeZone(instant)).toBe("09:02");
   });
 
+  it("accepts JSON-serialized ISO strings from API responses", () => {
+    expect(formatDateKeyInTimeZone("2026-07-10T16:00:00.000Z")).toBe("2026-07-11");
+    expect(formatClockInTimeZone("2026-07-11T01:02:00.000Z")).toBe("09:02");
+    expect(startOfBusinessDay("2026-07-10T16:00:00.000Z").toISOString()).toBe(
+      "2026-07-10T16:00:00.000Z",
+    );
+  });
+
   it("combines civil date and clock into a Shanghai instant", () => {
     expect(combineBusinessDateAndTime("2026-07-11", "09:02")?.toISOString()).toBe(
       "2026-07-11T01:02:00.000Z",
