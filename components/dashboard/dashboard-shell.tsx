@@ -15,6 +15,7 @@ import {
   Settings2,
   Table2,
 } from "lucide-react";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { cn } from "@/lib/utils";
 import { APP_VERSION, GITHUB_REPO_URL } from "@/lib/app-meta";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,13 @@ const navItems = [
   { href: "/dashboard/account", label: "账号安全", icon: KeyRound },
 ];
 
-export function DashboardShell({ children, user }: { children: React.ReactNode; user: AuthUser }) {
+export function DashboardShell({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: AuthUser;
+}) {
   const pathname = usePathname();
   const sidebarCollapsed = useSyncExternalStore(
     subscribeSidebarCollapsed,
@@ -73,6 +80,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    startNavigationProgress();
     window.location.href = "/auth/login";
   }
 
@@ -109,8 +117,12 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 priority
               />
               <div className="min-w-0 overflow-hidden">
-                <p className="truncate whitespace-nowrap font-semibold text-white">Overtime Tracker</p>
-                <p className="truncate whitespace-nowrap text-xs text-slate-500">智能加班统计平台</p>
+                <p className="truncate whitespace-nowrap font-semibold text-white">
+                  Overtime Tracker
+                </p>
+                <p className="truncate whitespace-nowrap text-xs text-slate-500">
+                  智能加班统计平台
+                </p>
               </div>
             </Link>
 
@@ -119,7 +131,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
               onToggle={toggleSidebar}
               className={cn(
                 "absolute top-1/2 z-10 shrink-0 -translate-y-1/2 transition-[left,transform] duration-300 ease-in-out",
-                sidebarCollapsed ? "left-1/2 -translate-x-1/2" : "left-[calc(100%-2rem)] translate-x-0",
+                sidebarCollapsed
+                  ? "left-1/2 -translate-x-1/2"
+                  : "left-[calc(100%-2rem)] translate-x-0",
               )}
             />
           </div>
@@ -144,7 +158,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                   <span
                     className={cn(
                       "block overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-in-out",
-                      sidebarCollapsed ? "ml-0 max-w-0 opacity-0" : "ml-3 max-w-[10rem] opacity-100",
+                      sidebarCollapsed
+                        ? "ml-0 max-w-0 opacity-0"
+                        : "ml-3 max-w-[10rem] opacity-100",
                     )}
                     aria-hidden={sidebarCollapsed}
                   >
@@ -164,7 +180,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
             )}
             aria-hidden={sidebarCollapsed}
           >
-            <p className="truncate whitespace-nowrap px-3 text-xs text-slate-500">版本 v{APP_VERSION}</p>
+            <p className="truncate whitespace-nowrap px-3 text-xs text-slate-500">
+              版本 v{APP_VERSION}
+            </p>
           </div>
         </aside>
 
@@ -175,7 +193,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 <p className="text-xs uppercase tracking-[0.28em] text-cyan-200/70">
                   Workforce Analytics
                 </p>
-                <h1 className="mt-1 text-xl font-semibold text-white">加班统计工作台</h1>
+                <h1 className="mt-1 text-xl font-semibold text-white">
+                  加班统计工作台
+                </h1>
               </div>
               <div className="flex items-center gap-2">
                 <div className="hidden items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 md:flex">
@@ -188,8 +208,12 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                     className="h-7 w-7 shrink-0 rounded-full border border-white/10 bg-slate-900"
                   />
                   <div className="min-w-0 text-left">
-                    <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                    <p className="text-sm font-medium text-white">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
                 <Button asChild variant="secondary" size="sm">
@@ -200,11 +224,20 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                   <Link href="/dashboard/reports">生成月报</Link>
                 </Button>
                 <Button asChild variant="ghost" size="icon" title="GitHub 源码">
-                  <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={GITHUB_REPO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <GitHubIcon className="h-4 w-4" />
                   </a>
                 </Button>
-                <Button variant="ghost" size="icon" title="退出登录" onClick={logout}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="退出登录"
+                  onClick={logout}
+                >
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
@@ -256,7 +289,15 @@ function SidebarLayoutIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect x="1.5" y="1.5" width="15" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.25" />
+      <rect
+        x="1.5"
+        y="1.5"
+        width="15"
+        height="15"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+      />
       <path d="M6.5 1.5V16.5" stroke="currentColor" strokeWidth="1.25" />
     </svg>
   );
@@ -264,7 +305,12 @@ function SidebarLayoutIcon() {
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className={className} fill="currentColor">
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+    >
       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
     </svg>
   );

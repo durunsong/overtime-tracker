@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins, Source_Serif_4 } from "next/font/google";
 import { Toaster } from "sonner";
+import { NavigationProgress } from "@/components/navigation-progress";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +34,14 @@ export const metadata: Metadata = {
   },
   description:
     "Overtime Tracker 帮助团队导入 Excel 打卡数据，自动计算每日加班、识别异常考勤，并生成可追溯的月度统计与 AI 总结。",
-  keywords: ["加班统计", "考勤分析", "Excel导入", "月报生成", "AI总结", "Overtime Tracker"],
+  keywords: [
+    "加班统计",
+    "考勤分析",
+    "Excel导入",
+    "月报生成",
+    "AI总结",
+    "Overtime Tracker",
+  ],
   authors: [{ name: "Overtime Tracker" }],
   creator: "Overtime Tracker",
   publisher: "Overtime Tracker",
@@ -55,7 +63,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Overtime Tracker | 智能加班统计平台",
-    description: "Excel 打卡导入、加班自动计算、异常识别、月报导出与 AI 总结的一体化工作台。",
+    description:
+      "Excel 打卡导入、加班自动计算、异常识别、月报导出与 AI 总结的一体化工作台。",
   },
   robots: {
     index: true,
@@ -82,6 +91,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${sourceSerif.variable} h-full`}
     >
       <body className="flex min-h-full flex-col antialiased">
+        <NavigationProgress />
         {children}
         <Toaster richColors position="top-right" />
       </body>

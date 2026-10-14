@@ -69,7 +69,9 @@ button:disabled,
   }
 
   .liquid-glass-strong {
-    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    box-shadow:
+      4px 4px 4px rgba(0, 0, 0, 0.05),
+      inset 0 1px 1px rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(50px);
     -webkit-backdrop-filter: blur(50px);
   }
@@ -82,7 +84,9 @@ button:disabled,
     border-radius: inherit;
     content: "";
     pointer-events: none;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
@@ -189,7 +193,14 @@ button:disabled,
   bottom: 0;
   left: -45%;
   width: 38%;
-  background: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 8%) 20%, rgb(255 255 255 / 65%) 50%, rgb(255 255 255 / 8%) 80%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 8%) 20%,
+    rgb(255 255 255 / 65%) 50%,
+    rgb(255 255 255 / 8%) 80%,
+    transparent 100%
+  );
   content: "";
   pointer-events: none;
   transform: skewX(-18deg);
@@ -231,7 +242,12 @@ button:disabled,
 }
 
 .auth-scanline {
-  background: linear-gradient(180deg, transparent, rgba(103, 232, 249, 0.055), transparent);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(103, 232, 249, 0.055),
+    transparent
+  );
   background-size: 100% 240px;
   animation: auth-scanline 10s ease-in-out infinite;
 }
@@ -277,7 +293,9 @@ button:disabled,
   inset: 8%;
   border: 1px solid rgb(103 232 249 / 22%);
   border-radius: 999px;
-  box-shadow: inset 0 0 40px rgb(103 232 249 / 6%), 0 0 48px rgb(103 232 249 / 8%);
+  box-shadow:
+    inset 0 0 40px rgb(103 232 249 / 6%),
+    0 0 48px rgb(103 232 249 / 8%);
 }
 
 .status-orbit-a {
@@ -302,7 +320,12 @@ button:disabled,
   position: absolute;
   inset: 6%;
   border-radius: 999px;
-  background: conic-gradient(from 0deg, transparent 0deg, rgb(103 232 249 / 0.18) 38deg, transparent 72deg);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgb(103 232 249 / 0.18) 38deg,
+    transparent 72deg
+  );
   filter: blur(0.5px);
   animation: status-sweep 3.4s linear infinite;
 }
@@ -316,7 +339,11 @@ button:disabled,
   justify-content: center;
   border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 28px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 12%), rgb(255 255 255 / 5%));
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 12%),
+    rgb(255 255 255 / 5%)
+  );
   box-shadow: 0 30px 100px rgb(2 6 23 / 42%);
   text-align: center;
   backdrop-filter: blur(18px);
@@ -396,16 +423,37 @@ button:disabled,
 
 .import-dropzone--screenshot::before {
   background:
-    linear-gradient(90deg, transparent 0%, rgb(240 171 252 / 0.36) 48%, transparent 100%),
-    repeating-linear-gradient(0deg, transparent 0 18px, rgb(240 171 252 / 0.08) 18px 19px);
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(240 171 252 / 0.36) 48%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 18px,
+      rgb(240 171 252 / 0.08) 18px 19px
+    );
   transform: translateX(-115%) skewX(-14deg);
 }
 
 .import-dropzone--screenshot::after {
   border: 1px solid rgb(240 171 252 / 34%);
   background:
-    linear-gradient(90deg, rgb(240 171 252 / 0.16), transparent 18%, transparent 82%, rgb(240 171 252 / 0.16)),
-    linear-gradient(0deg, rgb(240 171 252 / 0.12), transparent 22%, transparent 78%, rgb(240 171 252 / 0.12));
+    linear-gradient(
+      90deg,
+      rgb(240 171 252 / 0.16),
+      transparent 18%,
+      transparent 82%,
+      rgb(240 171 252 / 0.16)
+    ),
+    linear-gradient(
+      0deg,
+      rgb(240 171 252 / 0.12),
+      transparent 22%,
+      transparent 78%,
+      rgb(240 171 252 / 0.12)
+    );
   box-shadow: inset 0 0 42px rgb(240 171 252 / 12%);
 }
 
@@ -442,7 +490,12 @@ button:disabled,
 
 .import-dropzone--excel::after {
   height: 42%;
-  background: linear-gradient(180deg, transparent, rgb(103 232 249 / 0.2), transparent);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgb(103 232 249 / 0.2),
+    transparent
+  );
   transform: translateY(-120%);
 }
 
@@ -479,7 +532,8 @@ button:disabled,
 
 .import-dropzone--excel .import-dropzone__icon--active {
   filter: drop-shadow(0 0 16px rgb(103 232 249 / 58%));
-  animation: import-excel-icon 620ms cubic-bezier(0.2, 0.8, 0.2, 1) infinite alternate;
+  animation: import-excel-icon 620ms cubic-bezier(0.2, 0.8, 0.2, 1) infinite
+    alternate;
 }
 
 @keyframes ai-thinking-spin {
@@ -639,11 +693,15 @@ button:disabled,
 
 @keyframes import-excel-grid {
   from {
-    background-position: 0 0, 0 0;
+    background-position:
+      0 0,
+      0 0;
   }
 
   to {
-    background-position: 0 20px, 28px 0;
+    background-position:
+      0 20px,
+      28px 0;
   }
 }
 
@@ -696,5 +754,41 @@ button:disabled,
 
   .import-dropzone--active {
     transform: none;
+  }
+}
+
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 2px;
+  pointer-events: none;
+}
+
+.route-progress__bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #22d3ee 0%, #67e8f9 100%);
+  box-shadow:
+    0 0 8px rgba(103, 232, 249, 0.55),
+    0 0 16px rgba(34, 211, 238, 0.35);
+  transition:
+    transform 160ms ease-out,
+    opacity 180ms ease;
+  will-change: transform, opacity;
+}
+
+.route-progress[data-active="false"] .route-progress__bar {
+  transition:
+    transform 0ms,
+    opacity 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress__bar {
+    transition: none;
   }
 }

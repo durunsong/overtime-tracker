@@ -19,9 +19,16 @@ import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { passwordInputClassName, passwordToggleButtonClassName } from "@/components/auth/auth-input-styles";
+import {
+  passwordInputClassName,
+  passwordToggleButtonClassName,
+} from "@/components/auth/auth-input-styles";
 import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
-import { isPasswordPolicySatisfied, passwordPolicyDescription } from "@/lib/auth/password-policy";
+import { startNavigationProgress } from "@/lib/navigation-progress";
+import {
+  isPasswordPolicySatisfied,
+  passwordPolicyDescription,
+} from "@/lib/auth/password-policy";
 import { cn } from "@/lib/utils";
 
 type ApiResult<T = unknown> = {
@@ -57,6 +64,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
     }
 
     toast.success("登录成功");
+    startNavigationProgress();
     router.push(getSafeCallbackUrl(callbackUrl));
     router.refresh();
   }
@@ -113,7 +121,8 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,7 +138,11 @@ export function RegisterForm() {
     }
 
     setLoading(true);
-    const result = await postJson("/api/auth/register", { name, email, password });
+    const result = await postJson("/api/auth/register", {
+      name,
+      email,
+      password,
+    });
     setLoading(false);
 
     if (!result.success) {
@@ -138,6 +151,7 @@ export function RegisterForm() {
     }
 
     toast.success("账号已创建");
+    startNavigationProgress();
     router.push("/dashboard");
     router.refresh();
   }
@@ -185,7 +199,11 @@ export function RegisterForm() {
           />
         </Field>
         <PasswordStrengthMeter password={password} />
-        <Field label="确认密码" htmlFor="register-confirm-password" error={passwordMismatch ? "两次输入的密码不一致" : undefined}>
+        <Field
+          label="确认密码"
+          htmlFor="register-confirm-password"
+          error={passwordMismatch ? "两次输入的密码不一致" : undefined}
+        >
           <PasswordInput
             id="register-confirm-password"
             value={confirmPassword}
@@ -216,7 +234,9 @@ export function ForgotPasswordForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    const result = await postJson<ResetResult>("/api/auth/forgot-password", { email });
+    const result = await postJson<ResetResult>("/api/auth/forgot-password", {
+      email,
+    });
     setLoading(false);
 
     if (!result.success) {
@@ -262,7 +282,10 @@ export function ForgotPasswordForm() {
           animate={{ opacity: 1, y: 0 }}
         >
           <p className="text-slate-400">重置链接</p>
-          <Link className="mt-2 block break-all text-cyan-100 hover:text-cyan-50" href={resetUrl}>
+          <Link
+            className="mt-2 block break-all text-cyan-100 hover:text-cyan-50"
+            href={resetUrl}
+          >
             {resetUrl}
           </Link>
         </motion.div>
@@ -279,7 +302,8 @@ export function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -300,7 +324,10 @@ export function ResetPasswordForm() {
     }
 
     setLoading(true);
-    const result = await postJson("/api/auth/reset-password", { token, password });
+    const result = await postJson("/api/auth/reset-password", {
+      token,
+      password,
+    });
     setLoading(false);
 
     if (!result.success) {
@@ -309,6 +336,7 @@ export function ResetPasswordForm() {
     }
 
     toast.success("密码已重置");
+    startNavigationProgress();
     router.push("/auth/login");
   }
 
@@ -323,7 +351,12 @@ export function ResetPasswordForm() {
       ) : null}
       <form onSubmit={submit} className="space-y-4">
         <Field label="重置令牌" htmlFor="reset-token">
-          <Input id="reset-token" value={token} readOnly aria-label="重置令牌" />
+          <Input
+            id="reset-token"
+            value={token}
+            readOnly
+            aria-label="重置令牌"
+          />
         </Field>
         <Field label="新密码" htmlFor="reset-password">
           <PasswordInput
@@ -337,7 +370,11 @@ export function ResetPasswordForm() {
           />
         </Field>
         <PasswordStrengthMeter password={password} />
-        <Field label="确认新密码" htmlFor="reset-confirm-password" error={passwordMismatch ? "两次输入的密码不一致" : undefined}>
+        <Field
+          label="确认新密码"
+          htmlFor="reset-confirm-password"
+          error={passwordMismatch ? "两次输入的密码不一致" : undefined}
+        >
           <PasswordInput
             id="reset-confirm-password"
             value={confirmPassword}
@@ -360,7 +397,8 @@ export function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const passwordMismatch =
+    confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -423,7 +461,11 @@ export function ChangePasswordForm() {
             />
           </Field>
           <PasswordStrengthMeter password={newPassword} />
-          <Field label="确认新密码" htmlFor="confirm-new-password" error={passwordMismatch ? "两次输入的新密码不一致" : undefined}>
+          <Field
+            label="确认新密码"
+            htmlFor="confirm-new-password"
+            error={passwordMismatch ? "两次输入的新密码不一致" : undefined}
+          >
             <PasswordInput
               id="confirm-new-password"
               value={confirmPassword}
@@ -435,7 +477,11 @@ export function ChangePasswordForm() {
             />
           </Field>
           <Button disabled={loading} className="w-fit">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <KeyRound className="h-4 w-4" />
+            )}
             保存新密码
           </Button>
         </form>
@@ -458,9 +504,15 @@ function AuthPanel({
   children: React.ReactNode;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: "easeOut" }}>
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+    >
       <div className="pr-24">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+          {eyebrow}
+        </p>
         <h2 className="mt-2 text-2xl font-semibold text-white">{title}</h2>
         <p className="mt-2 text-sm leading-7 text-slate-300">{subtitle}</p>
       </div>
@@ -477,7 +529,9 @@ function AuthModeSwitch({ active }: { active: AuthMode }) {
         href="/auth/login"
         className={cn(
           "rounded px-3 py-2 text-center transition",
-          active === "login" ? "bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.22)]" : "text-slate-400 hover:text-white",
+          active === "login"
+            ? "bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.22)]"
+            : "text-slate-400 hover:text-white",
         )}
       >
         登录
@@ -486,7 +540,9 @@ function AuthModeSwitch({ active }: { active: AuthMode }) {
         href="/auth/register"
         className={cn(
           "rounded px-3 py-2 text-center transition",
-          active === "register" ? "bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.22)]" : "text-slate-400 hover:text-white",
+          active === "register"
+            ? "bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.22)]"
+            : "text-slate-400 hover:text-white",
         )}
       >
         注册
@@ -520,7 +576,10 @@ function PasswordInput({
   onChange,
   className,
   ...props
-}: Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange"> & {
+}: Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "value" | "onChange"
+> & {
   value: string;
   onChange: (value: string) => void;
 }) {
@@ -559,7 +618,11 @@ function SubmitButton({
 }) {
   return (
     <Button disabled={loading} className="h-11 w-full">
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+      {loading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Icon className="h-4 w-4" />
+      )}
       {label}
     </Button>
   );
@@ -585,7 +648,10 @@ function BackToLogin() {
   );
 }
 
-async function postJson<T = unknown>(url: string, body: Record<string, string>) {
+async function postJson<T = unknown>(
+  url: string,
+  body: Record<string, string>,
+) {
   let result: ApiResult<T>;
   try {
     const response = await fetch(url, {
@@ -595,7 +661,10 @@ async function postJson<T = unknown>(url: string, body: Record<string, string>) 
     });
     result = await response.json();
   } catch {
-    return { success: false, error: "请求失败，请检查本地服务" } satisfies ApiResult<T>;
+    return {
+      success: false,
+      error: "请求失败，请检查本地服务",
+    } satisfies ApiResult<T>;
   }
   return result;
 }
